@@ -1,0 +1,30 @@
+{
+	"name": "@repo/libs",
+	"private": true,
+	"version": "1.0.0",
+	"main": "dist/cjs/index.js",
+	"module": "dist/esm/index.js",
+	"types": "dist/esm/index.d.ts",
+	"exports": {
+		".": {
+			"require": "./dist/cjs/index.js",
+			"import": "./dist/esm/index.js"
+		}
+	},
+	"scripts": {
+		"build": "pnpm run build:cjs && pnpm run build:esm",
+		"build:cjs": "tsc -p tsconfig.cjs.json && resolve-tspaths --project tsconfig.cjs.json --out dist/cjs",
+		"build:esm": "tsc -p tsconfig.esm.json && resolve-tspaths --project tsconfig.esm.json --out dist/esm"
+	},
+	"devDependencies": {
+		"resolve-tspaths": "^0.8.23",
+		"typescript": "^5.9.2"
+	},
+	"dependencies": {
+		"@repo/typescript-config": "workspace:*",
+		"@repo/types": "workspace:*",
+		"axios": "^1.13.3",
+		"decimal.js": "^10.6.0",
+		"zod": "^4.3.6"
+	}
+}
