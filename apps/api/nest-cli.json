@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true
+  },
+  "projects": {
+    "brevo": {
+      "type": "library",
+      "root": "libs/brevo",
+      "entryFile": "index",
+      "sourceRoot": "libs/brevo/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/brevo/tsconfig.lib.json"
+      }
+    },
+    "constants": {
+      "type": "library",
+      "root": "libs/constants",
+      "entryFile": "index",
+      "sourceRoot": "libs/constants/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/constants/tsconfig.lib.json"
+      }
+    },
+    "logs": {
+      "type": "library",
+      "root": "libs/logs",
+      "entryFile": "index",
+      "sourceRoot": "libs/logs/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/logs/tsconfig.lib.json"
+      }
+    },
+    "mutations": {
+      "type": "library",
+      "root": "libs/mutations",
+      "entryFile": "index",
+      "sourceRoot": "libs/mutations/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/mutations/tsconfig.lib.json"
+      }
+    },
+    "util": {
+      "type": "library",
+      "root": "libs/util",
+      "entryFile": "index",
+      "sourceRoot": "libs/util/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/util/tsconfig.lib.json"
+      }
+    },
+    "winston": {
+      "type": "library",
+      "root": "libs/winston",
+      "entryFile": "index",
+      "sourceRoot": "libs/winston/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/winston/tsconfig.lib.json"
+      }
+    }
+  }
+}

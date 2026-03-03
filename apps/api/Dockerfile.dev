@@ -1,0 +1,23 @@
+# Run stage
+FROM node:20.13.1-alpine AS run
+
+# install pnpm globally
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# copy project contents
+COPY ./turbo.json ./
+COPY ./pnpm-workspace.yaml ./
+COPY ./package.json ./
+COPY ./.npmrc ./
+COPY ./packages/ ./packages/
+COPY ./apps/api/ ./apps/api/
+
+# change dir to app dir
+WORKDIR /app/apps/api
+
+# install api app packages
+RUN pnpm install
+
+EXPOSE 3001

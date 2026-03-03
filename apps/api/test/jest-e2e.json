@@ -1,0 +1,22 @@
+{
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@app/brevo(|/.*)$": "<rootDir>/../libs/brevo/src/$1",
+    "^@app/constants(|/.*)$": "<rootDir>/../libs/constants/src/$1",
+    "^@app/libs(|/.*)$": "<rootDir>/../libs/libs/src/$1",
+    "^@app/logs(|/.*)$": "<rootDir>/../libs/logs/src/$1",
+    "^@app/mutations(|/.*)$": "<rootDir>/../libs/mutations/src/$1",
+    "^@app/util(|/.*)$": "<rootDir>/../libs/util/src/$1",
+    "^@app/winston(|/.*)$": "<rootDir>/../libs/winston/src/$1"
+  }
+}
