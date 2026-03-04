@@ -1,2 +1,65 @@
-export * from './constants.module';
-export * from './constants.service';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+dotenv.config({
+  path: path.join(__dirname, '../.env'),
+});
+
+export type CONSTANTS_TYPE = {
+  NODE_ENV: 'development' | 'production';
+  PORT: number;
+  HASH: number;
+  API_ADDRESS: string;
+  SQL_DATABASE_URI: string;
+  SQL_DATABASE_TYPE: string;
+  SQL_DATABASE_HOST: string;
+  SQL_DATABASE_PORT: number;
+  SQL_DATABASE_USERNAME: string;
+  SQL_DATABASE_PASSWORD: string;
+  SQL_DATABASE_NAME: string;
+  SQL_SSL_MODE: boolean;
+  SQL_SSL_TYPE: string;
+  SQL_DATABASE_CA_CERT: string;
+  ALLOWED_URLS: string[];
+  JWT_SECRET: string;
+  JWT_EXPIRES_IN: string;
+  APP_EMAIL: string;
+  APP_EMAIL_NAME: string;
+  EMAIL_API_KEY: string;
+  CLOUDINARY_NAME: string;
+  CLOUDINARY_KEY: string;
+  CLOUDINARY_SECRET: string;
+  LOG_PATH: string;
+  AMOUNT_SCALE: number;
+};
+
+// prettier-ignore
+export const CONSTANTS: CONSTANTS_TYPE = {
+  NODE_ENV: process.env.NODE_ENV as CONSTANTS_TYPE['NODE_ENV'],
+  PORT: parseInt(process.env.PORT ?? "3000", 10),
+  HASH: parseInt(process.env.HASH ?? "10", 10),
+  API_ADDRESS: process.env.API_ADDRESS as CONSTANTS_TYPE['API_ADDRESS'],
+  SQL_DATABASE_URI: process.env.SQL_DATABASE_URI as CONSTANTS_TYPE['SQL_DATABASE_URI'],
+  SQL_DATABASE_TYPE: process.env.SQL_DATABASE_TYPE as CONSTANTS_TYPE['SQL_DATABASE_TYPE'],
+  SQL_DATABASE_HOST: process.env.SQL_DATABASE_HOST as CONSTANTS_TYPE['SQL_DATABASE_HOST'],
+  SQL_DATABASE_PORT: parseInt(process.env.SQL_DATABASE_PORT ?? "5432", 10),
+  SQL_DATABASE_USERNAME: process.env.SQL_DATABASE_USERNAME as CONSTANTS_TYPE['SQL_DATABASE_USERNAME'],
+  SQL_DATABASE_PASSWORD: process.env.SQL_DATABASE_PASSWORD as CONSTANTS_TYPE['SQL_DATABASE_PASSWORD'],
+  SQL_DATABASE_NAME: process.env.SQL_DATABASE_NAME as CONSTANTS_TYPE['SQL_DATABASE_NAME'],
+  SQL_SSL_MODE: process.env.SQL_SSL_MODE === "true" ? true : false,
+  SQL_SSL_TYPE: process.env.SQL_SSL_TYPE as CONSTANTS_TYPE['SQL_SSL_TYPE'],
+  SQL_DATABASE_CA_CERT: process.env.SQL_DATABASE_CA_CERT as CONSTANTS_TYPE['SQL_DATABASE_CA_CERT'],
+  ALLOWED_URLS: (process.env.ALLOWED_URLS ?? "*").split(","),
+  JWT_SECRET: process.env.JWT_SECRET as CONSTANTS_TYPE['JWT_SECRET'],
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN as CONSTANTS_TYPE['JWT_EXPIRES_IN'],
+  APP_EMAIL: process.env.APP_EMAIL as CONSTANTS_TYPE['APP_EMAIL'],
+  APP_EMAIL_NAME: process.env.APP_EMAIL_NAME as CONSTANTS_TYPE['APP_EMAIL_NAME'],
+  EMAIL_API_KEY: process.env.EMAIL_API_KEY as CONSTANTS_TYPE['EMAIL_API_KEY'],
+  CLOUDINARY_NAME: process.env.CLOUDINARY_NAME as CONSTANTS_TYPE['CLOUDINARY_NAME'],
+  CLOUDINARY_KEY: process.env.CLOUDINARY_KEY as CONSTANTS_TYPE['CLOUDINARY_KEY'],
+  CLOUDINARY_SECRET: process.env.CLOUDINARY_SECRET as CONSTANTS_TYPE['CLOUDINARY_SECRET'],
+  LOG_PATH: process.env.LOG_PATH as CONSTANTS_TYPE['LOG_PATH'],
+  AMOUNT_SCALE: 8
+};
+
+export const MONEY_NUMBER_REGEX = new RegExp(`^\\d+(?:\\.\\d{1,${CONSTANTS.AMOUNT_SCALE}})?$`);
