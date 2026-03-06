@@ -24,6 +24,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@test/*": ["./test/*"],
+      "@scripts/*": ["./scripts/*"],
       "@app/brevo": ["libs/brevo/src"],
       "@app/brevo/*": ["libs/brevo/src/*"],
       "@app/constants": ["libs/constants/src"],

@@ -1,4 +1,5 @@
-import * as fs from 'fs';
+import { TransactionSchema } from './transactions/schemas/transaction.schema';
+import { HubSchema } from './subs/schemas/hubs.schema';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -27,9 +28,10 @@ import { ClockSchema } from './clocks/schemas/clock.schema';
 import { FeedbackSchema } from './feedbacks/schemas/feedback.schema';
 import { PackageSchema } from './packages/schemas/package.schema';
 import { SubscriptionSchema } from './subs/schemas/subs.schema';
-import { HubSchema } from './subs/schemas/hubs.schema';
-import { TransactionSchema } from './transactions/schemas/transaction.schema';
 import { FlwModule } from '@app/flw';
+import { SettingsModule } from './settings/settings.module';
+import { SettingSchema } from './settings/schemas/setting.schema';
+import * as fs from 'fs';
 
 @Module({
   imports: [
@@ -46,6 +48,7 @@ import { FlwModule } from '@app/flw';
     PackagesModule,
     SubsModule,
     TransactionsModule,
+    SettingsModule,
     JwtModule.register({
       global: true,
       secret: CONSTANTS.JWT_SECRET,
@@ -71,6 +74,7 @@ import { FlwModule } from '@app/flw';
         SubscriptionSchema,
         HubSchema,
         TransactionSchema,
+        SettingSchema,
       ],
       migrations: [],
       synchronize: CONSTANTS.NODE_ENV === 'development' ? true : false,

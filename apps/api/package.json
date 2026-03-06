@@ -109,6 +109,7 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1",
       "^@test/(.*)$": "<rootDir>/test/$1",
+      "^@scripts/(.*)$": "<rootDir>/scripts/$1",
       "^@app/brevo(|/.*)$": "<rootDir>/libs/brevo/src/$1",
       "^@app/constants(|/.*)$": "<rootDir>/libs/constants/src/$1",
       "^@app/flw(|/.*)$": "<rootDir>/libs/flw/src/$1",
