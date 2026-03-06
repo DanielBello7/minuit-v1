@@ -34,4 +34,7 @@ export type IUser = ICommon & {
 };
 
 /** API response shape: IUser with @Exclude() fields (id, deleted_at, password) omitted */
-export type IUserSerialized = Omit<IUser, "deleted_at" | "password">;
+export type IUserSerialized = Omit<
+	IUser,
+	"deleted_at" | "password" | "refresh_token" | "last_login_date"
+>;

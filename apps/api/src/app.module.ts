@@ -19,6 +19,17 @@ import { BrevoModule } from '@app/brevo';
 import { CONSTANTS } from '@app/constants';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
+import { UserSchema } from './accounts/users/schemas/user.schema';
+import { AdminSchema } from './accounts/admins/schemas/admin.schema';
+import { AlarmSchema } from './alarms/schemas/alarm.schema';
+import { OtpSchema } from './auth/schemas/otp.schema';
+import { ClockSchema } from './clocks/schemas/clock.schema';
+import { FeedbackSchema } from './feedbacks/schemas/feedback.schema';
+import { PackageSchema } from './packages/schemas/package.schema';
+import { SubscriptionSchema } from './subs/schemas/subs.schema';
+import { HubSchema } from './subs/schemas/hubs.schema';
+import { TransactionSchema } from './transactions/schemas/transaction.schema';
+import { FlwModule } from '@app/flw';
 
 @Module({
   imports: [
@@ -49,7 +60,18 @@ import { JwtModule } from '@nestjs/jwt';
       username: CONSTANTS.SQL_DATABASE_USERNAME,
       password: CONSTANTS.SQL_DATABASE_PASSWORD,
       database: CONSTANTS.SQL_DATABASE_NAME,
-      entities: [],
+      entities: [
+        UserSchema,
+        AdminSchema,
+        AlarmSchema,
+        OtpSchema,
+        ClockSchema,
+        FeedbackSchema,
+        PackageSchema,
+        SubscriptionSchema,
+        HubSchema,
+        TransactionSchema,
+      ],
       migrations: [],
       synchronize: CONSTANTS.NODE_ENV === 'development' ? true : false,
       ssl: CONSTANTS.SQL_SSL_MODE,
@@ -70,6 +92,11 @@ import { JwtModule } from '@nestjs/jwt';
       apiKy: CONSTANTS.EMAIL_API_KEY,
       email: CONSTANTS.APP_EMAIL,
       ename: CONSTANTS.APP_EMAIL_NAME,
+    }),
+    FlwModule.register({
+      aCurrency: 'NGN',
+      publickey: CONSTANTS.FL_PUBLIC,
+      secretkey: CONSTANTS.FL_SECRET,
     }),
     WinstonModule.register({ dir: CONSTANTS.LOG_PATH }),
   ],

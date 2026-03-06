@@ -13,6 +13,7 @@
   "moduleNameMapper": {
     "^@app/brevo(|/.*)$": "<rootDir>/../libs/brevo/src/$1",
     "^@app/constants(|/.*)$": "<rootDir>/../libs/constants/src/$1",
+    "^@app/flw(|/.*)$": "<rootDir>/../libs/flw/src/$1",
     "^@app/libs(|/.*)$": "<rootDir>/../libs/libs/src/$1",
     "^@app/logs(|/.*)$": "<rootDir>/../libs/logs/src/$1",
     "^@app/mutations(|/.*)$": "<rootDir>/../libs/mutations/src/$1",

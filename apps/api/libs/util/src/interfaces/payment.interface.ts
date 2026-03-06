@@ -1,12 +1,12 @@
 /**
  * Payment processor interface
  */
-export interface IPayment {
+export interface IPaymentType {
   gateway: string;
-  makePayment(data: PaymentParams): Promise<PaymentResult>;
-  findPayment(refId: string): Promise<PaymentResult>;
-  getAvailableBanks(): Promise<BankType[]>;
-  verifyCredentials(data: {
+  make_payment(data: PaymentParams): Promise<PaymentResult>;
+  find_payment(refId: string): Promise<PaymentResult>;
+  get_available_banks(): Promise<BankType[]>;
+  verify_credentials(data: {
     accountNumber: string;
     bankCode: string;
     bankName: string;

@@ -25,6 +25,15 @@
         "tsConfigPath": "libs/constants/tsconfig.lib.json"
       }
     },
+    "flw": {
+      "type": "library",
+      "root": "libs/flw",
+      "entryFile": "index",
+      "sourceRoot": "libs/flw/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/flw/tsconfig.lib.json"
+      }
+    },
     "logs": {
       "type": "library",
       "root": "libs/logs",

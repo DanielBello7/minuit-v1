@@ -31,6 +31,8 @@ export type CONSTANTS_TYPE = {
   CLOUDINARY_SECRET: string;
   LOG_PATH: string;
   AMOUNT_SCALE: number;
+  FL_PUBLIC: string;
+  FL_SECRET: string;
 };
 
 // prettier-ignore
@@ -59,7 +61,9 @@ export const CONSTANTS: CONSTANTS_TYPE = {
   CLOUDINARY_KEY: process.env.CLOUDINARY_KEY as CONSTANTS_TYPE['CLOUDINARY_KEY'],
   CLOUDINARY_SECRET: process.env.CLOUDINARY_SECRET as CONSTANTS_TYPE['CLOUDINARY_SECRET'],
   LOG_PATH: process.env.LOG_PATH as CONSTANTS_TYPE['LOG_PATH'],
-  AMOUNT_SCALE: 8
+  AMOUNT_SCALE: 8,
+  FL_PUBLIC: process.env.FL_PUBLIC as CONSTANTS_TYPE['FL_PUBLIC'],
+  FL_SECRET: process.env.FL_SECRET as CONSTANTS_TYPE['FL_SECRET'],
 };
 
 export const MONEY_NUMBER_REGEX = new RegExp(`^\\d+(?:\\.\\d{1,${CONSTANTS.AMOUNT_SCALE}})?$`);
