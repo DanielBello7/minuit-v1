@@ -383,7 +383,7 @@ export class AuthService {
   sign_out = async (id: string) => {
     return this.mutation.execute(async (session) => {
       const user = await this.users.find_by_id_lock(id, session);
-      await this.users.update_user(user.id, { refresh_token: undefined }, session);
+      await this.users.update_user(user.id, { refresh_token: null as any }, session);
       return user;
     });
   };

@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, Max, Min } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Length } from 'class-validator';
 
 export class RecoverDto {
   @IsNotEmpty()
@@ -6,8 +6,7 @@ export class RecoverDto {
   email: string;
   @IsNotEmpty()
   @IsString()
-  @Min(6)
-  @Max(6)
+  @Length(6, 6, { message: 'otp must be exactly 6 characters' })
   otp: string;
   @IsNotEmpty()
   @IsString()

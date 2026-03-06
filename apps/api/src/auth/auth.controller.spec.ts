@@ -1,310 +1,374 @@
+import * as bcrypt from 'bcryptjs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
+import { getDataSourceToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { AuthModule } from './auth.module';
+import { UserSchema } from '@/accounts/users/schemas/user.schema';
+import { OtpSchema } from './schemas/otp.schema';
+import { UsersService } from '@/accounts/users/users.service';
+import { IMailModuleType } from '@app/util';
+import { AccountType, OTP_PURPOSE_ENUM } from '@repo/types';
+import { CreateUserDto } from '@/accounts/users/dto/create-user.dto';
 import { SigninEmailDto } from './dto/signin-email.dto';
 import { SigninOtpDto } from './dto/signin-otp.dto';
 import { EmailDto } from './dto/email.dto';
 import { RecoverDto } from './dto/recover.dto';
 import { RefreshDto } from './dto/refresh.dto';
-import { ValidUser, SigninResponse } from './types/auth.types';
+import { ValidateVerifyOtpDto } from './dto/validate-verify-otp.dto';
+import { CONSTANTS } from '@app/constants';
+import { MutationsModule } from '@app/mutations';
+import { UsersModule } from '@/accounts/users/users.module';
+import { PostgresTestContainer } from '@test/helpers/pg-test-container';
+import { BrevoModule } from '@app/brevo';
+import type { ReqExpress } from './types/auth.types';
 
-describe('AuthController', () => {
-  let controller: AuthController;
-  let authService: jest.Mocked<AuthService>;
+const TEST_JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret';
 
-  const mockValidUser: ValidUser = {
-    id: 'user-id-1',
+describe('AuthController (integration)', () => {
+  const pg = new PostgresTestContainer();
+  const createUserDto: CreateUserDto = {
+    firstname: 'Test',
+    surname: 'User',
     email: 'test@example.com',
-    name: 'Test User',
-    type: 'Users' as any,
+    username: 'testuser',
+    timezone: 'UTC',
+    display_name: 'Test User',
+    type: AccountType.Client,
+    is_email_verified: false,
+    has_password: true,
+    dark_mode: false,
+    is_onboarded: false,
+    password: undefined,
+    avatar: undefined,
+    refresh_token: undefined,
+    last_login_date: undefined,
   };
 
-  const mockReqExpress = {
-    user: {
-      ...mockValidUser,
-      token: 'jwt-token-123',
-    },
-  } as any;
-
-  const mockSigninResponse: SigninResponse = {
-    token: 'jwt-token',
-    refresh: 'refresh-token',
-    user: {
-      id: 'user-id-1',
-      display_name: 'Test User',
-      avatar: undefined,
-      email: 'test@example.com',
-      type: 'Users' as any,
-      created_at: new Date(),
-      is_email_verified: false,
-    },
-    expires: new Date(),
+  const mailMock = {
+    sendotp: jest.fn().mockResolvedValue(undefined),
+    sendmail: jest.fn().mockResolvedValue(undefined),
   };
+
+  let app: TestingModule;
+  let controller: AuthController;
+  let authService: AuthService;
+  let usersService: UsersService;
+  let dataSource: DataSource;
+
+  beforeAll(async () => {
+    await pg.start();
+    (CONSTANTS as any).JWT_EXPIRES_IN = '24h';
+
+    app = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot(
+          pg.getTypeOrmOptions({
+            entities: [UserSchema, OtpSchema],
+          }),
+        ),
+        JwtModule.register({
+          global: true,
+          secret: TEST_JWT_SECRET,
+          signOptions: { expiresIn: 86400 }, // 24h in seconds
+        }),
+        BrevoModule.register({
+          apiKy: 'test-key',
+          email: 'test@example.com',
+          ename: 'Test',
+        }),
+        AuthModule,
+        UsersModule,
+        MutationsModule,
+      ],
+    })
+      .overrideProvider(IMailModuleType)
+      .useValue(mailMock)
+      .compile();
+
+    controller = app.get(AuthController);
+    authService = app.get(AuthService);
+    usersService = app.get(UsersService);
+    dataSource = app.get(getDataSourceToken());
+  }, 60_000);
+
+  afterAll(async () => {
+    await dataSource?.destroy();
+    await app?.close();
+    await pg.stop();
+  });
 
   beforeEach(async () => {
-    const mockAuthService = {
-      sign_in_validated_account: jest.fn(),
-      sign_out: jest.fn(),
-      whoami: jest.fn(),
-      generate_refresh: jest.fn(),
-      signin_email_verify: jest.fn(),
-      signin_email_otp: jest.fn(),
-      recovery_verify: jest.fn(),
-      validate_verify_otp: jest.fn(),
-      recover: jest.fn(),
-    };
-
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [AuthController],
-      providers: [
-        {
-          provide: AuthService,
-          useValue: mockAuthService,
-        },
-      ],
-    }).compile();
-
-    controller = module.get<AuthController>(AuthController);
-    authService = module.get(AuthService);
-  });
-
-  afterEach(() => {
     jest.clearAllMocks();
+    const otpRepo = dataSource.getRepository(OtpSchema);
+    const usrRepo = dataSource.getRepository(UserSchema);
+    await otpRepo.clear();
+    await usrRepo.clear();
   });
 
-  describe.skip('sign_in_password', () => {
-    it('should sign in with password successfully', async () => {
-      authService.sign_in_validated_account = jest.fn().mockResolvedValue(mockSigninResponse);
+  async function createUserWithPassword(
+    overrides: Partial<CreateUserDto> & { password?: string } = {},
+  ): Promise<{ id: string; email: string; password: string }> {
+    const plainPassword = overrides.password ?? 'password123';
+    const hashed = bcrypt.hashSync(plainPassword, CONSTANTS.HASH ?? 10);
+    const dto: CreateUserDto = {
+      ...createUserDto,
+      ...overrides,
+      password: hashed,
+      has_password: true,
+      is_email_verified: overrides.is_email_verified ?? false,
+    };
+    const user = await usersService.create_user(dto);
+    return { id: user.id, email: user.email, password: plainPassword };
+  }
 
-      const result = await controller.sign_in_password(mockReqExpress);
+  async function createUserWithoutPassword(
+    overrides: Partial<CreateUserDto> = {},
+  ): Promise<{ id: string; email: string }> {
+    const dto: CreateUserDto = {
+      ...createUserDto,
+      ...overrides,
+      password: undefined,
+      has_password: false,
+    };
+    const user = await usersService.create_user(dto);
+    return { id: user.id, email: user.email };
+  }
 
-      expect(authService.sign_in_validated_account).toHaveBeenCalledWith(mockReqExpress.user);
-      expect(result).toEqual(mockSigninResponse);
+  function reqWithUser(id: string, email: string, token?: string): ReqExpress {
+    return {
+      user: {
+        id,
+        email,
+        name: 'Test User',
+        type: AccountType.Client,
+        ...(token && { token }),
+      },
+    } as ReqExpress;
+  }
+
+  describe('sign_in_password', () => {
+    it('returns signin response when req.user is set by guard', async () => {
+      const { id, email, password } = await createUserWithPassword();
+      const signIn = await authService.authenticate({
+        username: email,
+        password,
+      } as any);
+      const validUser = { id, email, name: 'Test User', type: AccountType.Client };
+      const req = reqWithUser(id, email);
+      (req as any).user = validUser;
+
+      const result = await controller.sign_in_password(req);
+
+      expect(result).toHaveProperty('token');
+      expect(result).toHaveProperty('refresh');
+      expect(result.user.email).toBe(email);
     });
 
-    it('should propagate errors from service', async () => {
-      const error = new Error('Authentication failed');
-      authService.sign_in_validated_account = jest.fn().mockRejectedValue(error);
+    it('propagates service errors', async () => {
+      const req = reqWithUser('non-existent-id', 'nobody@example.com');
 
-      await expect(controller.sign_in_password(mockReqExpress)).rejects.toThrow(
-        'Authentication failed',
+      await expect(controller.sign_in_password(req)).rejects.toThrow();
+    });
+  });
+
+  describe('sign_out', () => {
+    it('clears refresh token and returns user', async () => {
+      const { id, email, password } = await createUserWithPassword();
+      await authService.authenticate({ username: email, password } as any);
+      const req = reqWithUser(id, email, 'any-token');
+
+      const result = await controller.sign_out(req);
+
+      expect(result.id).toBe(id);
+      const userAfter = await usersService.find_user_by_id(id);
+      expect(userAfter.refresh_token).toBeNull();
+    });
+  });
+
+  describe('whoami', () => {
+    it('returns current user by id from req.user', async () => {
+      const { id, email } = await createUserWithPassword();
+      const req = reqWithUser(id, email);
+
+      const result = await controller.whoami(req);
+
+      expect(result.id).toBe(id);
+      expect(result.email).toBe(email);
+      expect(result.display_name).toBe('Test User');
+    });
+
+    it('propagates NotFound when user id does not exist', async () => {
+      const req = reqWithUser('00000000-0000-0000-0000-000000000000', 'nobody@example.com');
+
+      await expect(controller.whoami(req)).rejects.toThrow();
+    });
+  });
+
+  describe('refresh', () => {
+    it('returns new tokens when refresh matches', async () => {
+      const { email, password } = await createUserWithPassword();
+      const signIn = await authService.authenticate({ username: email, password } as any);
+      const payload: RefreshDto = { email, refresh: signIn.refresh };
+
+      const result = await controller.refresh(payload);
+
+      expect(result).toHaveProperty('token');
+      expect(result).toHaveProperty('refresh');
+      expect(result.user.email).toBe(email);
+    });
+
+    it('propagates error when refresh invalid', async () => {
+      const { email } = await createUserWithPassword({ email: 'r@example.com' });
+
+      await expect(controller.refresh({ email, refresh: 'invalid-refresh' })).rejects.toThrow(
+        'cannot find refresh',
       );
     });
   });
 
-  describe.skip('sign_out', () => {
-    it('should sign out successfully', async () => {
-      const mockUser = {
-        id: 'user-id-1',
-        ref_id: 'user-ref-1',
-        email: 'test@example.com',
-      };
-      authService.sign_out = jest.fn().mockResolvedValue(mockUser);
+  describe('signin_otp_verify', () => {
+    it('returns PASSWORD type when user has password', async () => {
+      await createUserWithPassword({ email: 'pwd@example.com' });
 
-      const result = await controller.sign_out(mockReqExpress);
+      const result = await controller.signin_otp_verify({
+        email: 'pwd@example.com',
+      } as SigninEmailDto);
 
-      expect(authService.sign_out).toHaveBeenCalledWith(mockReqExpress.user.id);
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual({ type: 'PASSWORD', display_name: 'Test User' });
     });
 
-    it('should propagate errors from service', async () => {
-      const error = new Error('Sign out failed');
-      authService.sign_out = jest.fn().mockRejectedValue(error);
+    it('returns OTP type and sends OTP when user has no password', async () => {
+      await createUserWithoutPassword({ email: 'otp@example.com' });
 
-      await expect(controller.sign_out(mockReqExpress)).rejects.toThrow('Sign out failed');
-    });
-  });
+      const result = await controller.signin_otp_verify({
+        email: 'otp@example.com',
+      } as SigninEmailDto);
 
-  describe.skip('whoami', () => {
-    it('should return user information', async () => {
-      const mockUser = {
-        id: 'user-id-1',
-        ref_id: 'user-ref-1',
-        email: 'test@example.com',
-        display_name: 'Test User',
-      };
-      authService.whoami = jest.fn().mockResolvedValue(mockUser);
-
-      const result = await controller.whoami(mockReqExpress);
-
-      expect(authService.whoami).toHaveBeenCalledWith(mockReqExpress.user.id);
-      expect(result).toEqual(mockUser);
-    });
-
-    it('should propagate errors from service', async () => {
-      const error = new Error('User not found');
-      authService.whoami = jest.fn().mockRejectedValue(error);
-
-      await expect(controller.whoami(mockReqExpress)).rejects.toThrow('User not found');
+      expect(result.type).toBe('OTP');
+      expect(mailMock.sendotp).toHaveBeenCalled();
     });
   });
 
-  describe.skip('refresh', () => {
-    const refreshDto: RefreshDto = {
-      email: 'test@example.com',
-      refresh: 'refresh-token-123',
-    };
+  describe('signin_otp', () => {
+    it('signs in with valid OTP and returns tokens', async () => {
+      await createUserWithoutPassword({ email: 'otpuser@example.com' });
+      await controller.signin_otp_verify({ email: 'otpuser@example.com' } as SigninEmailDto);
+      const sentOtp = (mailMock.sendotp as jest.Mock).mock.calls[0][0];
 
-    it('should generate new tokens successfully', async () => {
-      authService.generate_refresh = jest.fn().mockResolvedValue(mockSigninResponse);
+      const result = await controller.signin_otp({
+        email: 'otpuser@example.com',
+        otp: sentOtp,
+      } as SigninOtpDto);
 
-      const result = await controller.refresh(refreshDto);
-
-      expect(authService.generate_refresh).toHaveBeenCalledWith(
-        refreshDto.email,
-        refreshDto.refresh,
-      );
-      expect(result).toEqual(mockSigninResponse);
+      expect(result.token).toBeDefined();
+      expect(result.user.email).toBe('otpuser@example.com');
     });
 
-    it('should propagate errors from service', async () => {
-      const error = new Error('Invalid refresh token');
-      authService.generate_refresh = jest.fn().mockRejectedValue(error);
+    it('propagates error for wrong OTP', async () => {
+      await createUserWithoutPassword({ email: 'otp2@example.com' });
+      await controller.signin_otp_verify({ email: 'otp2@example.com' } as SigninEmailDto);
 
-      await expect(controller.refresh(refreshDto)).rejects.toThrow('Invalid refresh token');
-    });
-  });
-
-  describe.skip('signin_otp_verify', () => {
-    const signinEmailDto: SigninEmailDto = {
-      email: 'test@example.com',
-    };
-
-    it('should verify email and return type', async () => {
-      const mockResponse = {
-        type: 'OTP',
-        display_name: 'Test User',
-      };
-      authService.signin_email_verify = jest.fn().mockResolvedValue(mockResponse);
-
-      const result = await controller.signin_otp_verify(signinEmailDto);
-
-      expect(authService.signin_email_verify).toHaveBeenCalledWith(signinEmailDto);
-      expect(result).toEqual(mockResponse);
-    });
-
-    it('should return PASSWORD type if user has password', async () => {
-      const mockResponse = {
-        type: 'PASSWORD',
-        display_name: 'Test User',
-      };
-      authService.signin_email_verify = jest.fn().mockResolvedValue(mockResponse);
-
-      const result = await controller.signin_otp_verify(signinEmailDto);
-
-      expect(result).toEqual(mockResponse);
-      expect(result.type).toBe('PASSWORD');
-    });
-
-    it('should propagate errors from service', async () => {
-      const error = new Error('Email not found');
-      authService.signin_email_verify = jest.fn().mockRejectedValue(error);
-
-      await expect(controller.signin_otp_verify(signinEmailDto)).rejects.toThrow('Email not found');
+      await expect(
+        controller.signin_otp({
+          email: 'otp2@example.com',
+          otp: '000000',
+        } as SigninOtpDto),
+      ).rejects.toThrow();
     });
   });
 
-  describe.skip('signin_otp', () => {
-    const signinOtpDto: SigninOtpDto = {
-      email: 'test@example.com',
-      otp: '123456',
-    };
+  describe('verify_recovery_account', () => {
+    it('sends recovery OTP and returns true', async () => {
+      await createUserWithPassword({ email: 'recover@example.com' });
 
-    it('should sign in with OTP successfully', async () => {
-      authService.signin_email_otp = jest.fn().mockResolvedValue(mockSigninResponse);
+      const result = await controller.verify_recovery_account({
+        email: 'recover@example.com',
+      } as EmailDto);
 
-      const result = await controller.signin_otp(signinOtpDto);
-
-      expect(authService.signin_email_otp).toHaveBeenCalledWith(signinOtpDto);
-      expect(result).toEqual(mockSigninResponse);
+      expect(result).toBe(true);
+      expect(mailMock.sendotp).toHaveBeenCalled();
     });
 
-    it('should propagate errors from service', async () => {
-      const error = new Error('Invalid OTP');
-      authService.signin_email_otp = jest.fn().mockRejectedValue(error);
+    it('propagates error when user has no password', async () => {
+      await createUserWithoutPassword({ email: 'nopwd@example.com' });
 
-      await expect(controller.signin_otp(signinOtpDto)).rejects.toThrow('Invalid OTP');
+      await expect(
+        controller.verify_recovery_account({ email: 'nopwd@example.com' } as EmailDto),
+      ).rejects.toThrow('error recovering user password');
     });
   });
 
-  describe.skip('validate_recovery_account', () => {
-    const validateVerifyOtpDto = {
-      email: 'test@example.com',
-      otp: '123456',
-    };
+  describe('validate_recovery_account', () => {
+    it('returns true for valid recovery OTP', async () => {
+      await createUserWithPassword({ email: 'v@example.com' });
+      await controller.verify_recovery_account({ email: 'v@example.com' } as EmailDto);
+      const otp = (mailMock.sendotp as jest.Mock).mock.calls[0][0];
 
-    it('should validate recovery OTP successfully', async () => {
-      authService.validate_verify_otp = jest.fn().mockResolvedValue(true);
+      const result = await controller.validate_recovery_account({
+        email: 'v@example.com',
+        otp,
+      } as ValidateVerifyOtpDto);
 
-      const result = await controller.validate_recovery_account(validateVerifyOtpDto as any);
-
-      expect(authService.validate_verify_otp).toHaveBeenCalledWith(validateVerifyOtpDto);
       expect(result).toBe(true);
     });
 
-    it('should propagate BadRequestException from service', async () => {
-      authService.validate_verify_otp = jest
-        .fn()
-        .mockRejectedValue(new BadRequestException('invalid otp'));
+    it('propagates error for invalid OTP (user has no password)', async () => {
+      await createUserWithoutPassword({ email: 'vnopwd@example.com' });
+      const otpEntity = await authService.insert_otp({
+        email: 'vnopwd@example.com',
+        purpose: OTP_PURPOSE_ENUM.RECOVERY,
+      });
 
       await expect(
-        controller.validate_recovery_account(validateVerifyOtpDto as any),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        controller.validate_recovery_account(validateVerifyOtpDto as any),
-      ).rejects.toThrow('invalid otp');
+        controller.validate_recovery_account({
+          email: 'vnopwd@example.com',
+          otp: otpEntity.value,
+        } as ValidateVerifyOtpDto),
+      ).rejects.toThrow('invalid credentials');
     });
   });
 
-  describe.skip('verify_recovery_account', () => {
-    const emailDto: EmailDto = {
-      email: 'test@example.com',
-    };
+  describe('recover_account', () => {
+    it('updates password and returns user', async () => {
+      await createUserWithPassword({
+        email: 'recoverfinal@example.com',
+        password: 'oldpass123',
+      });
+      await controller.verify_recovery_account({
+        email: 'recoverfinal@example.com',
+      } as EmailDto);
+      const otp = (mailMock.sendotp as jest.Mock).mock.calls[0][0];
 
-    it('should verify recovery account successfully', async () => {
-      authService.recovery_verify = jest.fn().mockResolvedValue(true);
+      const result = await controller.recover_account({
+        email: 'recoverfinal@example.com',
+        otp,
+        password: 'newpass456',
+      } as RecoverDto);
 
-      const result = await controller.verify_recovery_account(emailDto);
-
-      expect(authService.recovery_verify).toHaveBeenCalledWith(emailDto);
-      expect(result).toBe(true);
+      expect(result.id).toBeDefined();
+      const userAfter = await usersService.find_user_by_email('recoverfinal@example.com');
+      expect(bcrypt.compareSync('newpass456', userAfter.password!)).toBe(true);
     });
 
-    it('should propagate errors from service', async () => {
-      const error = new Error('User not found');
-      authService.recovery_verify = jest.fn().mockRejectedValue(error);
+    it('propagates error when new password same as old', async () => {
+      await createUserWithPassword({
+        email: 'same@example.com',
+        password: 'samepass',
+      });
+      await controller.verify_recovery_account({ email: 'same@example.com' } as EmailDto);
+      const otp = (mailMock.sendotp as jest.Mock).mock.calls[0][0];
 
-      await expect(controller.verify_recovery_account(emailDto)).rejects.toThrow('User not found');
-    });
-  });
-
-  describe.skip('recover_account', () => {
-    const recoverDto: RecoverDto = {
-      email: 'test@example.com',
-      otp: '123456',
-      password: 'newpassword123',
-    };
-
-    it('should recover account successfully', async () => {
-      const mockUser = {
-        id: 'user-id-1',
-        ref_id: 'user-ref-1',
-        email: 'test@example.com',
-      };
-      authService.recover = jest.fn().mockResolvedValue(mockUser);
-
-      const result = await controller.recover_account(recoverDto);
-
-      expect(authService.recover).toHaveBeenCalledWith(recoverDto);
-      expect(result).toEqual(mockUser);
-    });
-
-    it('should propagate errors from service', async () => {
-      const error = new Error('Invalid OTP');
-      authService.recover = jest.fn().mockRejectedValue(error);
-
-      await expect(controller.recover_account(recoverDto)).rejects.toThrow('Invalid OTP');
+      await expect(
+        controller.recover_account({
+          email: 'same@example.com',
+          otp,
+          password: 'samepass',
+        } as RecoverDto),
+      ).rejects.toThrow('new password cannot be the same as old password');
     });
   });
 });

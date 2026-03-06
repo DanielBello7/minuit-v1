@@ -1,744 +1,327 @@
+/**
+ * Integration tests for UsersService using Postgres test container.
+ * No mocks: real DB and MutationsService.
+ */
+import * as bcrypt from 'bcryptjs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { getDataSourceToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { BadRequestException } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { UserSchema } from './schemas/user.schema';
-import { MutationsService } from '@app/mutations';
-import { InsertUserDto } from './dto/insert-user.dto';
+import { UsersModule } from './users.module';
+import { MutationsModule } from '@app/mutations';
 import { CreateUserDto } from './dto/create-user.dto';
-import { EntityManager } from 'typeorm';
-import { AccountType } from '@repo/types';
-import { SetPasswordDto } from './dto/set-password.dto';
-import { UpdatePasswordDto } from './dto/update-password.dto';
-import { SearchDto } from './dto/search.dto';
+import { InsertUserDto } from './dto/insert-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import * as bcrypt from 'bcryptjs';
+import { SetPasswordDto } from './dto/set-password.dto';
+import { SearchDto } from './dto/search.dto';
+import { AccountType } from '@repo/types';
+import { CONSTANTS } from '@app/constants';
+import { PostgresTestContainer } from '@test/helpers/pg-test-container';
 
-jest.mock('bcryptjs', () => ({
-  compareSync: jest.fn(),
-  hashSync: jest.fn((password: string) => `hashed_${password}`),
-}));
-
-describe('UsersService', () => {
-  let service: UsersService;
-  let usersRepository: jest.Mocked<Repository<UserSchema>>;
-  let mutationsService: jest.Mocked<MutationsService>;
-  let entityManager: jest.Mocked<EntityManager>;
-
-  const mockUser: Partial<UserSchema> = {
-    id: 'user-id-1',
+describe('UsersService (integration)', () => {
+  const pg = new PostgresTestContainer();
+  const baseCreateUserDto: CreateUserDto = {
+    firstname: 'Test',
+    surname: 'User',
     email: 'test@example.com',
-    firstname: 'John',
-    surname: 'Doe',
-    username: 'johndoe',
-    timezone: 'America/New_York',
-    avatar: undefined,
-    password: undefined,
-    has_password: false,
+    username: 'testuser',
+    timezone: 'UTC',
+    display_name: 'Test User',
+    type: AccountType.Client,
     is_email_verified: false,
-    display_name: 'John Doe',
+    has_password: false,
+    dark_mode: false,
     is_onboarded: false,
+    password: undefined,
+    avatar: undefined,
+    refresh_token: undefined,
+    last_login_date: undefined,
   };
 
-  beforeEach(async () => {
-    entityManager = {
-      getRepository: jest.fn(),
-    } as any;
+  let app: TestingModule;
+  let service: UsersService;
+  let dataSource: DataSource;
 
-    const mockUsersRepo = {
-      create: jest.fn(),
-      save: jest.fn(),
-      findOne: jest.fn(),
-      find: jest.fn(),
-      softDelete: jest.fn(),
-      createQueryBuilder: jest.fn(),
-      target: UserSchema,
-    };
+  beforeAll(async () => {
+    await pg.start();
 
-    mutationsService = {
-      execute: jest.fn(),
-      getRepo: jest.fn(),
-    } as any;
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UsersService,
-        {
-          provide: getRepositoryToken(UserSchema),
-          useValue: mockUsersRepo,
-        },
-        {
-          provide: MutationsService,
-          useValue: mutationsService,
-        },
+    app = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot(
+          pg.getTypeOrmOptions({
+            entities: [UserSchema],
+          }),
+        ),
+        UsersModule,
+        MutationsModule,
       ],
     }).compile();
 
-    service = module.get<UsersService>(UsersService);
-    usersRepository = module.get(getRepositoryToken(UserSchema));
+    service = app.get(UsersService);
+    dataSource = app.get(getDataSourceToken());
+  }, 60_000);
 
-    entityManager.getRepository = jest.fn(() => usersRepository) as any;
+  afterAll(async () => {
+    await dataSource?.destroy();
+    await app?.close();
+    await pg.stop();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  beforeEach(async () => {
+    const repo = dataSource.getRepository(UserSchema);
+    await repo.clear();
   });
 
-  describe.skip('is_already_registered', () => {
-    it('should throw BadRequestException if email is already registered', async () => {
-      const email = 'existing@example.com';
-      const username = 'newuser';
-      const queryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue({ ...mockUser, email }),
-      };
-      usersRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
+  async function createUser(
+    overrides: Partial<CreateUserDto> & { password?: string } = {},
+  ): Promise<{ id: string; email: string; password?: string }> {
+    const plainPassword = overrides.password;
+    const hashed = plainPassword ? bcrypt.hashSync(plainPassword, CONSTANTS.HASH ?? 10) : undefined;
+    const dto: CreateUserDto = {
+      ...baseCreateUserDto,
+      ...overrides,
+      password: hashed,
+      has_password: !!plainPassword,
+    };
+    const user = await service.create_user(dto);
+    return { id: user.id, email: user.email, password: plainPassword };
+  }
 
-      await expect(service.is_already_registered(email, username, entityManager)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.is_already_registered(email, username, entityManager)).rejects.toThrow(
+  describe('db connection', () => {
+    it('connects to the database', async () => {
+      const list = await dataSource.getRepository(UserSchema).find();
+      expect(list.length).toBeLessThan(10);
+    });
+  });
+
+  describe('create_user', () => {
+    it('creates a user and returns it', async () => {
+      const user = await service.create_user(baseCreateUserDto);
+      expect(user.id).toBeDefined();
+      expect(user.email).toBe(baseCreateUserDto.email);
+      expect(user.display_name).toBe('Test User');
+      expect(user.username).toBe(baseCreateUserDto.username);
+    });
+
+    it('throws BadRequestException for invalid DTO', async () => {
+      await expect(
+        service.create_user({ ...baseCreateUserDto, email: 'not-an-email' } as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('insert_other_user', () => {
+    const insertDto: InsertUserDto = {
+      email: 'new@example.com',
+      firstname: 'Jane',
+      surname: 'Doe',
+      username: 'janedoe',
+      timezone: 'UTC',
+      type: AccountType.Client,
+      password: undefined,
+    };
+
+    it('creates a user with default fields', async () => {
+      const user = await service.insert_other_user(insertDto);
+      expect(user.email).toBe(insertDto.email);
+      expect(user.display_name).toBe('Jane Doe');
+      expect(user.is_email_verified).toBe(false);
+      expect(user.has_password).toBe(false);
+    });
+
+    it('throws when type is Admins', async () => {
+      await expect(
+        service.insert_other_user({ ...insertDto, type: AccountType.Admins }),
+      ).rejects.toThrow('type cannot be admin');
+    });
+
+    it('throws when email already registered', async () => {
+      await service.insert_other_user(insertDto);
+      await expect(service.insert_other_user(insertDto)).rejects.toThrow(
         'email already registered',
       );
     });
 
-    it('should throw BadRequestException if username is already registered', async () => {
-      const email = 'new@example.com';
-      const username = 'johndoe';
-      const queryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue({ ...mockUser, username }),
-      };
-      usersRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
-
-      await expect(service.is_already_registered(email, username, entityManager)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.is_already_registered(email, username, entityManager)).rejects.toThrow(
-        'username already registered',
-      );
-    });
-
-    it('should return void if email and username are not registered', async () => {
-      const email = 'new@example.com';
-      const username = 'newuser';
-      const queryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(null),
-      };
-      usersRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
-
-      const result = await service.is_already_registered(email, username, entityManager);
-      expect(result).toBeUndefined();
+    it('throws when username already registered', async () => {
+      await service.insert_other_user(insertDto);
+      await expect(
+        service.insert_other_user({
+          ...insertDto,
+          email: 'other@example.com',
+          username: insertDto.username,
+        }),
+      ).rejects.toThrow('username already registered');
     });
   });
 
-  describe.skip('insert_other_user (insert_user)', () => {
-    const insertUserDto: InsertUserDto = {
-      email: 'newuser@example.com',
-      firstname: 'Jane',
-      surname: 'Smith',
-      username: 'janesmith',
-      timezone: 'America/Los_Angeles',
-      password: undefined,
-      type: AccountType.Client,
-    };
-
-    it('should create user successfully', async () => {
-      const createdUser = {
-        ...mockUser,
-        ...insertUserDto,
-        is_email_verified: false,
-        display_name: 'Jane Smith',
-      };
-
-      usersRepository.create = jest.fn().mockReturnValue(createdUser);
-      usersRepository.save = jest.fn().mockResolvedValue(createdUser);
-      const queryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(null),
-      };
-      usersRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
-
-      mutationsService.execute = jest.fn().mockImplementation(async (cb) => {
-        return cb(entityManager);
-      });
-
-      const result = await service.insert_other_user(insertUserDto);
-
-      expect(mutationsService.execute).toHaveBeenCalled();
-      expect(usersRepository.save).toHaveBeenCalled();
-      expect(result).toMatchObject({
-        email: insertUserDto.email,
-        firstname: insertUserDto.firstname,
-        surname: insertUserDto.surname,
-        timezone: insertUserDto.timezone,
-        is_email_verified: false,
-      });
-    });
-
-    it('should throw BadRequestException if email is already registered', async () => {
-      const queryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue({ ...mockUser, email: insertUserDto.email }),
-      };
-      usersRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
-
-      mutationsService.execute = jest.fn().mockImplementation(async (cb) => {
-        return cb(entityManager);
-      });
-
-      await expect(service.insert_other_user(insertUserDto)).rejects.toThrow(BadRequestException);
-    });
-
-    it('should throw BadRequestException for invalid DTO', async () => {
-      const invalidDto = { email: 'invalid-email' } as InsertUserDto;
-
-      await expect(service.insert_other_user(invalidDto)).rejects.toThrow(BadRequestException);
-    });
-
-    it('should work with provided session', async () => {
-      const createdUser = {
-        ...mockUser,
-        ...insertUserDto,
-        is_email_verified: false,
-        display_name: 'Jane Smith',
-      };
-      const queryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(null),
-      };
-      usersRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
-      usersRepository.create = jest.fn().mockReturnValue(createdUser);
-      usersRepository.save = jest.fn().mockResolvedValue(createdUser);
-
-      const result = await service.insert_other_user(insertUserDto, entityManager);
-
-      expect(mutationsService.execute).not.toHaveBeenCalled();
-      expect(result).toBeDefined();
+  describe('insert_admin', () => {
+    it('creates a user with type Admins', async () => {
+      const user = await service.insert_admin({
+        email: 'admin@example.com',
+        firstname: 'Admin',
+        surname: 'User',
+        username: 'adminuser',
+        timezone: 'UTC',
+      } as any);
+      expect(user.type).toBe(AccountType.Admins);
     });
   });
 
-  describe.skip('insert_admin', () => {
-    const insertAdminDto = {
-      email: 'admin@example.com',
-      firstname: 'Admin',
-      surname: 'User',
-      username: 'adminuser',
-      timezone: 'UTC',
-      password: undefined,
-    };
+  describe('find_user_by_id', () => {
+    it('returns user when id exists', async () => {
+      const { id } = await createUser();
+      const user = await service.find_user_by_id(id);
+      expect(user.id).toBe(id);
+      expect(user.email).toBe(baseCreateUserDto.email);
+    });
 
-    it('should create admin user successfully', async () => {
-      const queryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(null),
-      };
-      usersRepository.createQueryBuilder = jest.fn().mockReturnValue(queryBuilder);
-      const createdAdmin = {
-        ...mockUser,
-        ...insertAdminDto,
-        type: 'Admins' as any,
-        is_email_verified: false,
-      };
-      usersRepository.create = jest.fn().mockReturnValue(createdAdmin);
-      usersRepository.save = jest.fn().mockResolvedValue(createdAdmin);
-
-      mutationsService.execute = jest.fn().mockImplementation(async (cb) => {
-        return cb(entityManager);
-      });
-
-      const result = await service.insert_admin(insertAdminDto as any);
-
-      expect(result.type).toBe('Admins');
+    it('throws NotFoundException when id does not exist', async () => {
+      await expect(
+        service.find_user_by_id('00000000-0000-0000-0000-000000000000'),
+      ).rejects.toThrow();
     });
   });
 
-  describe.skip('insert_other_user type guard', () => {
-    const insertUserDto: InsertUserDto = {
-      email: 'user@example.com',
-      firstname: 'Regular',
-      surname: 'User',
-      username: 'regularuser',
-      timezone: 'UTC',
-      password: undefined,
-      type: AccountType.Client,
-    };
-
-    it('should throw BadRequestException if type is Admins', async () => {
-      const adminDto = {
-        ...insertUserDto,
-        type: AccountType.Admins,
-      };
-
-      await expect(service.insert_other_user(adminDto as any)).rejects.toThrow(BadRequestException);
-      await expect(service.insert_other_user(adminDto as any)).rejects.toThrow(
-        'type cannot be admin',
-      );
-    });
-  });
-
-  describe.skip('find_user_by_email', () => {
-    it('should find user by email successfully', async () => {
-      usersRepository.findOne = jest.fn().mockResolvedValue(mockUser);
-
-      const result = await service.find_user_by_email('test@example.com');
-
-      expect(usersRepository.findOne).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' },
-      });
-      expect(result).toEqual(mockUser);
+  describe('find_user_by_email', () => {
+    it('returns user when email exists', async () => {
+      const { email } = await createUser({ email: 'find@example.com' });
+      const user = await service.find_user_by_email(email);
+      expect(user.email).toBe(email);
     });
 
-    it('should throw NotFoundException if email not found', async () => {
-      usersRepository.findOne = jest.fn().mockResolvedValue(null);
-
-      await expect(service.find_user_by_email('nonexistent@example.com')).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.find_user_by_email('nonexistent@example.com')).rejects.toThrow(
+    it('throws NotFoundException when email not registered', async () => {
+      await expect(service.find_user_by_email('nobody@example.com')).rejects.toThrow(
         'email not registered',
       );
     });
+  });
 
-    it('should work with provided session', async () => {
-      const sessionRepo = {
-        findOne: jest.fn().mockResolvedValue(mockUser),
-      };
-      entityManager.getRepository = jest.fn().mockReturnValue(sessionRepo);
-
-      const result = await service.find_user_by_email('test@example.com', entityManager);
-
-      expect(result).toEqual(mockUser);
-      expect(sessionRepo.findOne).toHaveBeenCalled();
+  describe('get_status_by_id', () => {
+    it('returns is_onboarded', async () => {
+      const { id } = await createUser();
+      const status = await service.get_status_by_id(id);
+      expect(status).toEqual({ is_onboarded: false });
     });
   });
 
-  describe.skip('find_user_by_id', () => {
-    it('should find user by id successfully', async () => {
-      usersRepository.findOne = jest.fn().mockResolvedValue(mockUser);
-
-      const result = await service.find_user_by_id('user-id-1');
-
-      expect(usersRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'user-id-1' },
-      });
-      expect(result).toEqual(mockUser);
-    });
-
-    it('should throw NotFoundException if user not found', async () => {
-      usersRepository.findOne = jest.fn().mockResolvedValue(null);
-
-      await expect(service.find_user_by_id('non-existent-id')).rejects.toThrow(NotFoundException);
-      await expect(service.find_user_by_id('non-existent-id')).rejects.toThrow(
-        'Cannot find entity with id',
-      );
-    });
-
-    it('should work with provided session', async () => {
-      const sessionRepo = {
-        findOne: jest.fn().mockResolvedValue(mockUser),
-      };
-      entityManager.getRepository = jest.fn().mockReturnValue(sessionRepo);
-
-      const result = await service.find_user_by_id('user-id-1', entityManager);
-
-      expect(result).toEqual(mockUser);
-      expect(sessionRepo.findOne).toHaveBeenCalledWith({
-        where: { id: 'user-id-1' },
-      });
-    });
-  });
-
-  describe.skip('get_status_by_id', () => {
-    it('should return is_onboarded status', async () => {
-      usersRepository.findOne = jest.fn().mockResolvedValue(mockUser);
-
-      const result = await service.get_status_by_id('user-id-1');
-
-      expect(result).toEqual({ is_onboarded: (mockUser as any).is_onboarded });
-    });
-
-    it('should throw NotFoundException when user not found', async () => {
-      usersRepository.findOne = jest.fn().mockResolvedValue(null);
-
-      await expect(service.get_status_by_id('non-existent-id')).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe.skip('modify_user_by_id', () => {
-    it('should update user and return result', async () => {
+  describe('modify_user_by_id', () => {
+    it('updates user and computes display_name', async () => {
+      const { id } = await createUser();
       const body: UpdateUserDto = { firstname: 'Jane', surname: 'Smith' };
-      const updatedUser = { ...mockUser, ...body };
-      usersRepository.findOne = jest.fn().mockResolvedValue(mockUser);
-      usersRepository.update = jest.fn().mockResolvedValue({ affected: 1 });
-      usersRepository.findOne = jest
-        .fn()
-        .mockResolvedValueOnce(mockUser)
-        .mockResolvedValueOnce(updatedUser);
+      const updated = await service.modify_user_by_id(id, body);
+      expect(updated.firstname).toBe('Jane');
+      expect(updated.surname).toBe('Smith');
+      expect(updated.display_name).toBe('Jane Smith');
+    });
+  });
 
-      mutationsService.execute = jest.fn().mockImplementation(async (cb) => {
-        return cb(entityManager);
+  describe('update_user', () => {
+    it('updates by id', async () => {
+      const { id } = await createUser();
+      const updated = await service.update_user(id, { firstname: 'Updated' });
+      expect(updated.firstname).toBe('Updated');
+    });
+  });
+
+  describe('delete_user', () => {
+    it('soft-deletes user', async () => {
+      const { id } = await createUser();
+      const removed = await service.delete_user(id);
+      expect(removed.id).toBe(id);
+      await expect(service.find_user_by_id(id)).rejects.toThrow();
+    });
+  });
+
+  describe('set_password', () => {
+    it('sets password for user without password', async () => {
+      const { id } = await createUser();
+      const body: SetPasswordDto = { id, new_password: 'secret123' };
+      const updated = await service.set_password(body);
+      expect(updated.has_password).toBe(true);
+      const user = await service.find_user_by_id(id);
+      expect(bcrypt.compareSync('secret123', user.password!)).toBe(true);
+    });
+
+    it('throws when user already has password', async () => {
+      const { id } = await createUser({ password: 'existing' });
+      await expect(service.set_password({ id, new_password: 'newpass' })).rejects.toThrow(
+        'user already has its password set',
+      );
+    });
+  });
+
+  describe('update_password', () => {
+    it('updates password when old password matches', async () => {
+      const { id } = await createUser({ password: 'oldpass' });
+      const updated = await service.update_password(id, {
+        old_password: 'oldpass',
+        new_password: 'newpass',
       });
+      expect(updated.id).toBe(id);
+      const user = await service.find_user_by_id(id);
+      expect(bcrypt.compareSync('newpass', user.password!)).toBe(true);
+    });
 
-      const updateSpy = jest.spyOn(service, 'update_user').mockResolvedValue(updatedUser as any);
-
-      const result = await service.modify_user_by_id('user-id-1', body);
-
-      expect(mutationsService.execute).toHaveBeenCalled();
-      expect(updateSpy).toHaveBeenCalledWith(
-        'user-id-1',
-        expect.objectContaining({
-          firstname: 'Jane',
-          surname: 'Smith',
-          display_name: 'Jane Smith',
+    it('throws when user has no password', async () => {
+      const { id } = await createUser();
+      await expect(
+        service.update_password(id, {
+          old_password: 'any',
+          new_password: 'new',
         }),
-        entityManager,
-      );
-      expect(result).toEqual(updatedUser);
-      updateSpy.mockRestore();
-    });
-  });
-
-  describe.skip('create_user', () => {
-    const createUserDto: CreateUserDto = {
-      email: 'user@example.com',
-      firstname: 'Test',
-      surname: 'User',
-      timezone: 'UTC',
-      avatar: undefined,
-      last_login_date: undefined,
-      refresh_token: undefined,
-      password: undefined,
-      username: 'hellothere',
-      type: AccountType.Client,
-      display_name: 'Test User',
-      is_email_verified: false,
-      has_password: false,
-      dark_mode: false,
-      is_onboarded: false,
-    };
-
-    it('should create user successfully', async () => {
-      const createdUser = { ...mockUser, ...createUserDto };
-      usersRepository.create = jest.fn().mockReturnValue(createdUser);
-      usersRepository.save = jest.fn().mockResolvedValue(createdUser);
-
-      const result = await service.create_user(createUserDto);
-
-      expect(usersRepository.create).toHaveBeenCalledWith(createUserDto);
-      expect(usersRepository.save).toHaveBeenCalledWith(createdUser);
-      expect(result).toEqual(createdUser);
+      ).rejects.toThrow("user doesn't have a password set");
     });
 
-    it('should throw BadRequestException for invalid DTO', async () => {
-      const invalidDto = { email: 'invalid' } as CreateUserDto;
-
-      await expect(service.create_user(invalidDto)).rejects.toThrow(BadRequestException);
-    });
-
-    it('should work with provided session', async () => {
-      const createdUser = { ...mockUser, ...createUserDto };
-      usersRepository.create = jest.fn().mockReturnValue(createdUser);
-      usersRepository.save = jest.fn().mockResolvedValue(createdUser);
-
-      const result = await service.create_user(createUserDto, entityManager);
-
-      expect(result).toEqual(createdUser);
-    });
-  });
-
-  describe.skip('find_by_id_lock', () => {
-    it('should find user by id with lock', async () => {
-      const id = 'user-id-1';
-      usersRepository.findOne = jest.fn().mockResolvedValue(mockUser);
-
-      const result = await service.find_by_id_lock(id, entityManager);
-
-      expect(entityManager.getRepository).toHaveBeenCalledWith(UserSchema);
-      expect(usersRepository.findOne).toHaveBeenCalledWith({
-        where: { id },
-        lock: { mode: 'pessimistic_write' },
-      });
-      expect(result).toEqual(mockUser);
-    });
-
-    it('should throw NotFoundException if user not found', async () => {
-      usersRepository.findOne = jest.fn().mockResolvedValue(null);
-
-      await expect(service.find_by_id_lock('non-existent-id', entityManager)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
-
-  describe.skip('find_by_ids_lock', () => {
-    it('should find users by ids with lock', async () => {
-      const userIds = ['user-id-1', 'user-id-2'];
-      const mockUsers = [mockUser, { ...mockUser, id: 'user-id-2' }];
-      usersRepository.find = jest.fn().mockResolvedValue(mockUsers);
-
-      const result = await service.find_by_ids_lock(userIds, entityManager);
-
-      expect(entityManager.getRepository).toHaveBeenCalledWith(UserSchema);
-      expect(usersRepository.find).toHaveBeenCalledWith({
-        where: { id: expect.anything() },
-        lock: { mode: 'pessimistic_write' },
-      });
-      expect(result).toEqual(mockUsers);
-    });
-
-    it('should return empty array if no users found', async () => {
-      usersRepository.find = jest.fn().mockResolvedValue([]);
-
-      const result = await service.find_by_ids_lock(['non-existent-id'], entityManager);
-
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe.skip('find_by_ids', () => {
-    it('should find users by ids', async () => {
-      const userIds = ['user-id-1', 'user-id-2'];
-      const mockUsers = [mockUser, { ...mockUser, id: 'user-id-2' }];
-      usersRepository.find = jest.fn().mockResolvedValue(mockUsers);
-
-      const result = await service.find_by_ids(userIds);
-
-      expect(usersRepository.find).toHaveBeenCalledWith({
-        where: { id: expect.anything() },
-      });
-      expect(result).toEqual(mockUsers);
-    });
-  });
-
-  describe.skip('delete_user', () => {
-    it('should soft-delete user', async () => {
-      const userId = 'user-id-1';
-      usersRepository.findOne = jest.fn().mockResolvedValue(mockUser);
-      usersRepository.softDelete = jest.fn().mockResolvedValue({ affected: 1 });
-
-      const result = await service.delete_user(userId);
-
-      expect(usersRepository.findOne).toHaveBeenCalledWith({
-        where: { id: userId },
-      });
-      expect(usersRepository.softDelete).toHaveBeenCalledWith(userId);
-      expect(result).toEqual(mockUser);
-    });
-
-    it('should throw NotFoundException if user not found', async () => {
-      usersRepository.findOne = jest.fn().mockResolvedValue(null);
-
-      await expect(service.delete_user('non-existent-id')).rejects.toThrow(NotFoundException);
-      await expect(service.delete_user('non-existent-id')).rejects.toThrow(
-        'Unable to find entity with id',
-      );
-    });
-  });
-
-  describe.skip('set_password', () => {
-    it('should set password for user without password', async () => {
-      const body: SetPasswordDto = {
-        id: 'user-id-1',
-        new_password: 'newSecret123',
-      };
-      const userWithoutPassword = {
-        ...mockUser,
-        password: undefined,
-        has_password: false,
-      };
-      usersRepository.findOne = jest.fn().mockResolvedValue(userWithoutPassword);
-      usersRepository.update = jest.fn().mockResolvedValue({ affected: 1 });
-      usersRepository.findOne = jest
-        .fn()
-        .mockResolvedValueOnce(userWithoutPassword)
-        .mockResolvedValueOnce({ ...userWithoutPassword, has_password: true });
-
-      mutationsService.execute = jest.fn().mockImplementation(async (cb) => {
-        return cb(entityManager);
-      });
-
-      const updateSpy = jest
-        .spyOn(service, 'update_user')
-        .mockResolvedValue({ ...userWithoutPassword, has_password: true } as any);
-
-      const result = await service.set_password(body);
-
-      expect(mutationsService.execute).toHaveBeenCalled();
-      expect(updateSpy).toHaveBeenCalledWith(
-        'user-id-1',
-        expect.objectContaining({ has_password: true }),
-        entityManager,
-      );
-      updateSpy.mockRestore();
-    });
-
-    it('should throw BadRequestException when user already has password', async () => {
-      const body: SetPasswordDto = {
-        id: 'user-id-1',
-        new_password: 'newSecret123',
-      };
-      const userWithPassword = {
-        ...mockUser,
-        password: 'hashed',
-        has_password: true,
-      };
-      usersRepository.findOne = jest.fn().mockResolvedValue(userWithPassword);
-
-      mutationsService.execute = jest.fn().mockImplementation(async (cb) => {
-        return cb(entityManager);
-      });
-
-      await expect(service.set_password(body)).rejects.toThrow(BadRequestException);
-      await expect(service.set_password(body)).rejects.toThrow('user already has its password set');
-    });
-  });
-
-  describe.skip('update_password', () => {
-    it('should update password when old password matches', async () => {
-      (bcrypt.compareSync as jest.Mock).mockReturnValue(true);
-      const body: UpdatePasswordDto = {
-        old_password: 'oldSecret',
-        new_password: 'newSecret123',
-      };
-      const userWithPassword = {
-        ...mockUser,
-        password: 'existingHash',
-        has_password: true,
-      };
-      usersRepository.findOne = jest.fn().mockResolvedValue(userWithPassword);
-
-      mutationsService.execute = jest.fn().mockImplementation(async (cb) => {
-        return cb(entityManager);
-      });
-
-      const updateSpy = jest.spyOn(service, 'update_user').mockResolvedValue(mockUser as any);
-
-      await service.update_password('user-id-1', body);
-
-      expect(bcrypt.compareSync).toHaveBeenCalledWith(body.old_password, userWithPassword.password);
-      expect(mutationsService.execute).toHaveBeenCalled();
-      expect(updateSpy).toHaveBeenCalledWith(
-        'user-id-1',
-        expect.objectContaining({ password: 'hashed_newSecret123' }),
-        entityManager,
-      );
-      updateSpy.mockRestore();
-    });
-
-    it('should throw BadRequestException when user has no password', async () => {
-      const body: UpdatePasswordDto = {
-        old_password: 'old',
-        new_password: 'new',
-      };
-      const userWithoutPassword = {
-        ...mockUser,
-        password: undefined,
-        has_password: false,
-      };
-      usersRepository.findOne = jest.fn().mockResolvedValue(userWithoutPassword);
-
-      mutationsService.execute = jest.fn().mockImplementation(async (cb) => {
-        return cb(entityManager);
-      });
-
-      await expect(service.update_password('user-id-1', body)).rejects.toThrow(BadRequestException);
-      await expect(service.update_password('user-id-1', body)).rejects.toThrow(
-        "user doesn't have a password set",
-      );
-    });
-
-    it('should throw BadRequestException when old password is wrong', async () => {
-      (bcrypt.compareSync as jest.Mock).mockReturnValue(false);
-      const body: UpdatePasswordDto = {
-        old_password: 'wrong',
-        new_password: 'new',
-      };
-      const userWithPassword = {
-        ...mockUser,
-        password: 'hash',
-        has_password: true,
-      };
-      usersRepository.findOne = jest.fn().mockResolvedValue(userWithPassword);
-
-      mutationsService.execute = jest.fn().mockImplementation(async (cb) => {
-        return cb(entityManager);
-      });
-
-      await expect(service.update_password('user-id-1', body)).rejects.toThrow(BadRequestException);
-      await expect(service.update_password('user-id-1', body)).rejects.toThrow(
-        'invalid credentials',
-      );
-    });
-  });
-
-  describe.skip('search_by_email', () => {
-    it('should return paginated users matching email', async () => {
-      const body: SearchDto = { value: 'john' };
-      const docs = [mockUser];
-      usersRepository.findAndCount = jest.fn().mockResolvedValue([docs, 1]);
-
-      const result = await service.search_by_email(body);
-
-      expect(usersRepository.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { email: expect.anything() },
-          skip: 0,
-          take: 9,
+    it('throws when old password is wrong', async () => {
+      const { id } = await createUser({ password: 'correct' });
+      await expect(
+        service.update_password(id, {
+          old_password: 'wrong',
+          new_password: 'new',
         }),
-      );
-      expect(result.docs).toEqual(docs);
-      expect(result.total_docs).toBe(1);
+      ).rejects.toThrow('invalid credentials');
+    });
+  });
+
+  describe('search_by_email', () => {
+    it('returns paginated users matching email', async () => {
+      await createUser({ email: 'alice@example.com' });
+      await createUser({ email: 'alice2@example.com' });
+      await createUser({ email: 'bob@example.com' });
+      const result = await service.search_by_email({ value: 'alice' } as SearchDto);
+      expect(result.docs.length).toBeGreaterThanOrEqual(2);
+      expect(result.total_docs).toBeGreaterThanOrEqual(2);
       expect(result.page).toBe(1);
-      expect(result.has_next_page).toBe(false);
+      expect(result).toHaveProperty('has_next_page');
+      expect(result).toHaveProperty('total_pages');
     });
 
-    it('should throw BadRequestException for invalid DTO', async () => {
-      const invalidBody = { value: '' } as SearchDto;
-
-      await expect(service.search_by_email(invalidBody)).rejects.toThrow(BadRequestException);
-    });
-
-    it('should throw BadRequestException when pagination limit exceeded', async () => {
-      usersRepository.findAndCount = jest.fn();
-      const body: SearchDto = {
-        value: 'a',
-        pagination: { page: 10000, pick: 20 },
-      } as SearchDto;
-
-      await expect(service.search_by_email(body)).rejects.toThrow(BadRequestException);
-      await expect(service.search_by_email(body)).rejects.toThrow('pagination limit exceeded');
-    });
-  });
-
-  describe.skip('update_user', () => {
-    it('should update user by id', async () => {
-      const body: UpdateUserDto = { firstname: 'Jane' };
-      const updatedUser = { ...mockUser, ...body };
-      usersRepository.update = jest.fn().mockResolvedValue({ affected: 1 });
-      usersRepository.findOne = jest.fn().mockResolvedValue(updatedUser);
-
-      const result = await service.update_user('user-id-1', body);
-
-      expect(usersRepository.update).toHaveBeenCalledWith('user-id-1', body);
-      expect(result).toEqual(updatedUser);
-    });
-
-    it('should throw BadRequestException for invalid DTO', async () => {
-      const invalidBody = { firstname: '' } as UpdateUserDto;
-
-      await expect(service.update_user('user-id-1', invalidBody)).rejects.toThrow(
+    it('throws when value is empty (invalid DTO)', async () => {
+      await expect(service.search_by_email({ value: '' } as SearchDto)).rejects.toThrow(
         BadRequestException,
       );
+    });
+
+    it('throws when pagination limit exceeded', async () => {
+      await expect(
+        service.search_by_email({
+          value: 'a',
+          pagination: { page: 100_001, pick: 10 },
+        } as any),
+      ).rejects.toThrow('pagination limit exceeded');
+    });
+  });
+
+  describe('find_by_ids', () => {
+    it('returns users by ids', async () => {
+      const { id: id1 } = await createUser({ email: 'u1@example.com' });
+      const { id: id2 } = await createUser({ email: 'u2@example.com' });
+      const list = await service.find_by_ids([id1, id2]);
+      expect(list).toHaveLength(2);
+      expect(list.map((u) => u.id).sort()).toEqual([id1, id2].sort());
     });
   });
 });
