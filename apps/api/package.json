@@ -34,6 +34,7 @@
     "@repo/types": "workspace:*",
     "@types/multer": "^2.0.0",
     "@types/otp-generator": "^4.0.2",
+    "@types/pg": "^8.18.0",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "class-transformer": "^0.5.1",
@@ -52,6 +53,7 @@
     "pg": "^8.19.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "testcontainers": "^11.12.0",
     "typeorm": "^0.3.28",
     "typeorm-extension": "^3.9.0",
     "uuid": "9",
@@ -63,7 +65,8 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
-    "@types/express": "^5.0.0",
+    "@testcontainers/postgresql": "^10.14.0",
+    "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
@@ -100,9 +103,11 @@
     "testEnvironment": "node",
     "roots": [
       "<rootDir>/src/",
-      "<rootDir>/libs/"
+      "<rootDir>/libs/",
+      "<rootDir>/test/"
     ],
     "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1",
       "^@app/brevo(|/.*)$": "<rootDir>/libs/brevo/src/$1",
       "^@app/constants(|/.*)$": "<rootDir>/libs/constants/src/$1",
       "^@app/flw(|/.*)$": "<rootDir>/libs/flw/src/$1",

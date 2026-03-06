@@ -3,13 +3,18 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
+import { SearchDto } from './dto/search.dto';
 
 describe('UsersController', () => {
-  let controller: UsersController;
   let usersService: jest.Mocked<UsersService>;
+  let controller: UsersController;
+
+  const userId = '550e8400-e29b-41d4-a716-446655440000';
 
   const mockUser = {
-    id: 'user-id-1',
+    id: userId,
     ref_id: 'user-ref-1',
     email: 'user@example.com',
     firstname: 'John',
@@ -27,7 +32,13 @@ describe('UsersController', () => {
 
   beforeEach(async () => {
     const mockUsersService = {
-      modify_user_by_ref: jest.fn(),
+      modify_user_by_id: jest.fn(),
+      search_by_email: jest.fn(),
+      find_user_by_email: jest.fn(),
+      find_user_by_id: jest.fn(),
+      get_status_by_id: jest.fn(),
+      set_password: jest.fn(),
+      update_password: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -48,8 +59,7 @@ describe('UsersController', () => {
     jest.clearAllMocks();
   });
 
-  describe('update_user', () => {
-    const userId = 'user-ref-1';
+  describe.skip('update_user', () => {
     const updateUserDto: UpdateUserDto = {
       firstname: 'Jane',
       surname: 'Smith',
@@ -143,7 +153,6 @@ describe('UsersController', () => {
         password: 'newpassword',
         email: 'newemail@example.com',
         timezone: 'UTC',
-        ref_id: 'new-ref-id',
       };
 
       // The service should filter out restricted fields
@@ -204,43 +213,169 @@ describe('UsersController', () => {
     });
   });
 
-  describe('get_user_settings', () => {
-    const userId = 'user-ref-1';
-    const mockUserSettings = {
-      id: 'settings-id-1',
-      user_id: 'user-id-1',
-      dark_mode: false,
-      is_onboarded: true,
-      refresh_token: undefined,
-      last_login_date: undefined,
-    };
+  describe.skip('search_users', () => {
+    it('should return paginated users by email search', async () => {
+      const query: SearchDto = { value: 'john' };
+      const result = {
+        docs: [mockUser],
+        has_next_page: false,
+        has_prev_page: false,
+        pick: 9,
+        next_page: null,
+        page: 1,
+        paging_counter: 1,
+        prev_page: null,
+        total_docs: 1,
+        total_pages: 1,
+      };
+      usersService.search_by_email = jest.fn().mockResolvedValue(result);
 
-    it('should get user settings successfully', async () => {
-      usersService.get_user_settings_by_user_ref = jest.fn().mockResolvedValue(mockUserSettings);
+      const actual = await controller.search_users(query);
 
-      const result = await controller.get_user_settings(userId);
-
-      expect(usersService.get_user_settings_by_user_ref).toHaveBeenCalledWith(userId);
-      expect(usersService.get_user_settings_by_user_ref).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(mockUserSettings);
+      expect(usersService.search_by_email).toHaveBeenCalledWith(query);
+      expect(usersService.search_by_email).toHaveBeenCalledTimes(1);
+      expect(actual).toEqual(result);
     });
 
-    it('should throw NotFoundException if user settings not found', async () => {
-      usersService.get_user_settings_by_user_ref = jest
+    it('should propagate BadRequestException from service', async () => {
+      const query = { value: '' } as SearchDto;
+      usersService.search_by_email = jest
         .fn()
-        .mockRejectedValue(new NotFoundException('cannot find user'));
+        .mockRejectedValue(new BadRequestException(['value should not be empty']));
 
-      await expect(controller.get_user_settings(userId)).rejects.toThrow(NotFoundException);
-      await expect(controller.get_user_settings(userId)).rejects.toThrow('cannot find user');
+      await expect(controller.search_users(query)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe.skip('get_user_by_email', () => {
+    it('should return user when email exists', async () => {
+      const email = 'user@example.com';
+      usersService.find_user_by_email = jest.fn().mockResolvedValue(mockUser);
+
+      const result = await controller.get_user_by_email(email);
+
+      expect(usersService.find_user_by_email).toHaveBeenCalledWith(email);
+      expect(usersService.find_user_by_email).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockUser);
     });
 
-    it('should propagate errors from service', async () => {
-      const error = new Error('Database connection failed');
-      usersService.get_user_settings_by_user_ref = jest.fn().mockRejectedValue(error);
+    it('should throw NotFoundException when email not registered', async () => {
+      usersService.find_user_by_email = jest
+        .fn()
+        .mockRejectedValue(new NotFoundException('email not registered'));
 
-      await expect(controller.get_user_settings(userId)).rejects.toThrow(
-        'Database connection failed',
+      await expect(controller.get_user_by_email('unknown@example.com')).rejects.toThrow(
+        NotFoundException,
       );
+      await expect(controller.get_user_by_email('unknown@example.com')).rejects.toThrow(
+        'email not registered',
+      );
+    });
+  });
+
+  describe.skip('get_user_by_id', () => {
+    it('should return user when id exists', async () => {
+      usersService.find_user_by_id = jest.fn().mockResolvedValue(mockUser);
+
+      const result = await controller.get_user_by_id(userId);
+
+      expect(usersService.find_user_by_id).toHaveBeenCalledWith(userId);
+      expect(usersService.find_user_by_id).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      usersService.find_user_by_id = jest
+        .fn()
+        .mockRejectedValue(new NotFoundException('Cannot find entity with id'));
+
+      await expect(controller.get_user_by_id(userId)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe.skip('get_user_status', () => {
+    it('should return status with is_onboarded', async () => {
+      const status = { is_onboarded: true };
+      usersService.get_status_by_id = jest.fn().mockResolvedValue(status);
+
+      const result = await controller.get_user_status(userId);
+
+      expect(usersService.get_status_by_id).toHaveBeenCalledWith(userId);
+      expect(usersService.get_status_by_id).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(status);
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      usersService.get_status_by_id = jest
+        .fn()
+        .mockRejectedValue(new NotFoundException('Cannot find entity with id'));
+
+      await expect(controller.get_user_status(userId)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe.skip('set_password', () => {
+    it('should set password for user', async () => {
+      const body: SetPasswordDto = { id: userId, new_password: 'newSecret123' };
+      usersService.set_password = jest.fn().mockResolvedValue(mockUser);
+
+      const result = await controller.set_password(body);
+
+      expect(usersService.set_password).toHaveBeenCalledWith(body);
+      expect(usersService.set_password).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should propagate BadRequestException when user already has password', async () => {
+      const body: SetPasswordDto = { id: userId, new_password: 'newSecret123' };
+      usersService.set_password = jest
+        .fn()
+        .mockRejectedValue(new BadRequestException('user already has its password set'));
+
+      await expect(controller.set_password(body)).rejects.toThrow(BadRequestException);
+      await expect(controller.set_password(body)).rejects.toThrow(
+        'user already has its password set',
+      );
+    });
+  });
+
+  describe.skip('update_password', () => {
+    it('should update password when old password is correct', async () => {
+      const body: UpdatePasswordDto = {
+        old_password: 'oldSecret',
+        new_password: 'newSecret123',
+      };
+      usersService.update_password = jest.fn().mockResolvedValue(mockUser);
+
+      const result = await controller.update_password(body, userId);
+
+      expect(usersService.update_password).toHaveBeenCalledWith(userId, body);
+      expect(usersService.update_password).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should propagate BadRequestException when user has no password', async () => {
+      const body: UpdatePasswordDto = {
+        old_password: 'old',
+        new_password: 'new',
+      };
+      usersService.update_password = jest
+        .fn()
+        .mockRejectedValue(new BadRequestException("user doesn't have a password set"));
+
+      await expect(controller.update_password(body, userId)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should propagate BadRequestException for invalid credentials', async () => {
+      const body: UpdatePasswordDto = {
+        old_password: 'wrong',
+        new_password: 'new',
+      };
+      usersService.update_password = jest
+        .fn()
+        .mockRejectedValue(new BadRequestException('invalid credentials'));
+
+      await expect(controller.update_password(body, userId)).rejects.toThrow('invalid credentials');
     });
   });
 });

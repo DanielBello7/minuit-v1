@@ -19,7 +19,6 @@ import { CreateOtpDto } from './dto/otp/create-otp.dto';
 import { create_helper, delete_helper, IMailModuleType, isValidDto } from '@app/util';
 import { InsertOtp } from './dto/otp/insert-otp.dto';
 import * as OTPs from 'otp-generator';
-import { v4 as uuid } from 'uuid';
 import { OTP_PURPOSE_ENUM } from '@repo/types';
 import { SigninEmailDto } from './dto/signin-email.dto';
 import { SigninOtpDto } from './dto/signin-otp.dto';
@@ -77,7 +76,7 @@ export class AuthService {
    * and optionally runs within a transaction.
    * @param body - Email and purpose (e.g. LOGIN, RECOVERY, VERIFY)
    * @param session - Optional transaction manager
-   * @returns Created OTP entity with value and ref_id
+   * @returns Created OTP entity with value and id
    */
   insert_otp = async (body: InsertOtp, session?: EntityManager) => {
     const otp = OTPs.generate(6, {
@@ -90,9 +89,7 @@ export class AuthService {
       {
         ...body,
         expires_at: datefns.addHours(new Date(), 2),
-        index: 0,
         value: otp,
-        ref_id: uuid(),
       },
       session,
     );
@@ -109,7 +106,7 @@ export class AuthService {
 
   /**
    * Creates an OTP record from a DTO (validates and persists). Used when full OTP
-   * payload is already built (e.g. value, expires_at, ref_id).
+   * payload is already built (e.g. value, expires_at, id).
    * @param body - CreateOtpDto with value, email, purpose, expires_at, etc.
    * @param session - Optional transaction manager
    * @returns Created OTP entity
@@ -257,7 +254,6 @@ export class AuthService {
           email: user.email,
           id: user.id,
           name: user.display_name,
-          ref: user.ref_id,
           type: user.type,
         },
         session,
@@ -291,14 +287,12 @@ export class AuthService {
         return {
           id: user.id,
           email: user.email,
-          ref: user.ref_id,
           name: user.display_name,
           type: user.type,
         } satisfies ValidUser;
       }
       return {
         id: user.id,
-        ref: user.ref_id,
         email: user.email,
         name: user.display_name,
         type: user.type,
@@ -327,7 +321,7 @@ export class AuthService {
       });
 
       const exp = datefns.addHours(new Date(), parseInt(CONSTANTS.JWT_EXPIRES_IN, 10));
-      await this.users.update_user_settings_by_user_id(
+      await this.users.update_user(
         body.id,
         {
           last_login_date: new Date(),
@@ -348,7 +342,6 @@ export class AuthService {
           email: user.email,
           type: user.type,
           is_email_verified: user.is_email_verified,
-          ref_id: user.ref_id,
         },
         expires: exp,
       } satisfies SigninResponse;
@@ -382,21 +375,15 @@ export class AuthService {
   };
 
   /**
-   * Signs out the user identified by ref_id: clears refresh_token in user settings
+   * Signs out the user identified by id: clears refresh_token in user settings
    * so the refresh token can no longer be used.
-   * @param ref - User ref_id (from JWT)
+   * @param id - User id (from JWT)
    * @returns User entity after update
    */
-  sign_out = async (ref: string) => {
+  sign_out = async (id: string) => {
     return this.mutation.execute(async (session) => {
-      const user = await this.users.find_by_ref_id_lock(ref, session);
-      await this.users.update_user_settings_by_user_id(
-        user.id,
-        {
-          refresh_token: undefined,
-        },
-        session,
-      );
+      const user = await this.users.find_by_id_lock(id, session);
+      await this.users.update_user(user.id, { refresh_token: undefined }, session);
       return user;
     });
   };
@@ -427,23 +414,20 @@ export class AuthService {
    */
   generate_refresh = async (useremail: string, refresh: string) => {
     return this.mutation.execute(async (session) => {
-      const account = await this.users.find_user_by_email(useremail, session);
-      const settings = await this.users.get_user_settings_by_user_ref(account.id, session);
-
-      if (!settings.refresh_token) {
+      const user = await this.users.find_user_by_email(useremail, session);
+      if (!user.refresh_token) {
         throw new NotFoundException('cannot find refresh');
       }
-      if (refresh !== settings.refresh_token) {
+      if (refresh !== user.refresh_token) {
         throw new NotFoundException('cannot find refresh');
       }
-      await this.jwt.verify(settings.refresh_token);
+      await this.jwt.verify(user.refresh_token);
       return this.sign_in_validated_account(
         {
-          email: account.email,
-          id: account.id,
-          name: account.display_name,
-          type: account.type,
-          ref: account.ref_id,
+          email: user.email,
+          id: user.id,
+          name: user.display_name,
+          type: user.type,
         },
         session,
       );

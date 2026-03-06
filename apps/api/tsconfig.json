@@ -22,51 +22,22 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@app/brevo": [
-        "libs/brevo/src"
-      ],
-      "@app/brevo/*": [
-        "libs/brevo/src/*"
-      ],
-      "@app/constants": [
-        "libs/constants/src"
-      ],
-      "@app/constants/*": [
-        "libs/constants/src/*"
-      ],
-      "@app/flw": [
-        "libs/flw/src"
-      ],
-      "@app/flw/*": [
-        "libs/flw/src/*"
-      ],
-      "@app/logs": [
-        "libs/logs/src"
-      ],
-      "@app/logs/*": [
-        "libs/logs/src/*"
-      ],
-      "@app/mutations": [
-        "libs/mutations/src"
-      ],
-      "@app/mutations/*": [
-        "libs/mutations/src/*"
-      ],
-      "@app/util": [
-        "libs/util/src"
-      ],
-      "@app/util/*": [
-        "libs/util/src/*"
-      ],
-      "@app/winston": [
-        "libs/winston/src"
-      ],
-      "@app/winston/*": [
-        "libs/winston/src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@test/*": ["./test/*"],
+      "@app/brevo": ["libs/brevo/src"],
+      "@app/brevo/*": ["libs/brevo/src/*"],
+      "@app/constants": ["libs/constants/src"],
+      "@app/constants/*": ["libs/constants/src/*"],
+      "@app/flw": ["libs/flw/src"],
+      "@app/flw/*": ["libs/flw/src/*"],
+      "@app/logs": ["libs/logs/src"],
+      "@app/logs/*": ["libs/logs/src/*"],
+      "@app/mutations": ["libs/mutations/src"],
+      "@app/mutations/*": ["libs/mutations/src/*"],
+      "@app/util": ["libs/util/src"],
+      "@app/util/*": ["libs/util/src/*"],
+      "@app/winston": ["libs/winston/src"],
+      "@app/winston/*": ["libs/winston/src/*"]
     }
   }
 }

@@ -7,7 +7,6 @@ import { Request as ExpressRequest } from 'express';
  */
 export type ValidUser = {
   id: string;
-  ref: string;
   email: string;
   name: string;
   type: AccountType;
@@ -19,7 +18,6 @@ export type ValidUser = {
  */
 export type SigninResponseUser = {
   id: string;
-  ref_id: string;
   display_name: string;
   avatar: string | undefined;
   email: string;

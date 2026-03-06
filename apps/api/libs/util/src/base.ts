@@ -12,7 +12,6 @@ import { Exclude } from 'class-transformer';
 
 export abstract class CommonBase implements ICommon {
   @PrimaryGeneratedColumn('uuid') id: string;
-  @Column({ type: 'uuid', unique: true }) ref_id: string;
   @Column({ type: 'int', generated: 'increment', unique: true }) index: number;
   @CreateDateColumn({ type: 'timestamp' }) created_at: Date;
   @UpdateDateColumn({ type: 'timestamp' }) updated_at: Date;

@@ -3,6 +3,8 @@ import * as path from 'path';
 
 dotenv.config({
   path: path.join(__dirname, '../.env'),
+  debug: false,
+  quiet: true,
 });
 
 export type CONSTANTS_TYPE = {

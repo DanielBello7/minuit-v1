@@ -1,15 +1,8 @@
+import { type ReqExpress } from '@/auth/types/auth.types';
 import { JwtGuard, PassportLocalGuard } from '@/auth/guards';
-import { ReqExpress } from '@/auth/types/auth.types';
 import { AuthService } from './auth.service';
 import { RefreshDto } from './dto/refresh.dto';
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { SigninEmailDto } from './dto/signin-email.dto';
 import { SigninOtpDto } from './dto/signin-otp.dto';
 import { EmailDto } from './dto/email.dto';
@@ -29,7 +22,7 @@ export class AuthController {
   @UseGuards(JwtGuard)
   @Post('signout')
   sign_out(@Request() req: ReqExpress) {
-    return this.auth.sign_out(req.user.token);
+    return this.auth.sign_out(req.user.id);
   }
 
   @UseGuards(JwtGuard)
