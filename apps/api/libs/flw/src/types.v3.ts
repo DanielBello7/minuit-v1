@@ -1,4 +1,4 @@
-export type CurrencyType =
+export type FLUTTERWAVE_CURRENCY_TYPE =
   | 'NGN'
   | 'USD'
   | 'KES'
@@ -11,37 +11,13 @@ export type CurrencyType =
   | 'JPY'
   | 'CAD';
 
-export interface PAYMENT_PARAMETERS {
-  account_number: string;
-  account_bank: string;
-  amount: number;
-  currency: string;
-  beneficiary_name: string;
-  narration?: string;
-}
-
-export type ACC_BALANCE = {
+export type FLUTTERWAVE_ACC_BALANCE = {
   currency: string;
   available_balance: number;
   ledger_balance: number;
 };
 
-export type VERIFY_ACCOUNT =
-  | {
-      status: 'error';
-      message: string;
-      data: null;
-    }
-  | {
-      status: 'success';
-      message: string;
-      data: {
-        account_number: string;
-        account_name: string;
-      };
-    };
-
-export type PAYMENT_RESULT = {
+export type FLUTTERWAVE_PAYMENT_RESULT = {
   status: 'error' | 'success';
   message: string;
   data: {
@@ -64,7 +40,7 @@ export type PAYMENT_RESULT = {
   };
 };
 
-export interface PAYMENT_DATA {
+export type PAYMENT_DATA = {
   account_number: string;
   account_bank: string; // get bank from GetBanks()
   amount: number;
@@ -73,9 +49,28 @@ export interface PAYMENT_DATA {
   debit_currency: string;
   beneficiary_name: string;
   narration?: string;
-}
+};
 
-export interface VerifySuccessResponse {
+type FLUTTERWAVE_ACC_VERIFY_FAILED = {
+  status: 'error';
+  message: string;
+  data: null;
+};
+
+type FLUTTERWAVE_ACC_VERIFY_PASSED = {
+  status: 'success';
+  message: string;
+  data: {
+    account_number: string;
+    account_name: string;
+  };
+};
+
+export type FLUTTERWAVE_ACC_VERIFY_ACCOUNT =
+  | FLUTTERWAVE_ACC_VERIFY_FAILED
+  | FLUTTERWAVE_ACC_VERIFY_PASSED;
+
+type FLUTTERWAVE_VERIFY_SUCCESS_RESPONSE = {
   status: 'success';
   message: string;
   data: {
@@ -114,12 +109,14 @@ export interface VerifySuccessResponse {
       created_at: string;
     };
   };
-}
+};
 
-export interface VerifyFailedResponse {
+type FLUTTERWAVE_VERIFY_FAILED_RESPONSE = {
   status: 'error';
   message: string;
   data: null;
-}
+};
 
-export type VerifyResponse = VerifyFailedResponse | VerifySuccessResponse;
+export type FLUTTERWAVE_VERIFY_RESPONSE =
+  | FLUTTERWAVE_VERIFY_FAILED_RESPONSE
+  | FLUTTERWAVE_VERIFY_SUCCESS_RESPONSE;

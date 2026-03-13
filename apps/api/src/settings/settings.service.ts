@@ -17,12 +17,14 @@ export class SettingsService {
 
     const response = await em.find();
     let current: SettingSchema;
+
     if (response.length !== 1) {
-      await this.settings.clear();
+      await this.settings.deleteAll();
       current = await create_helper(this.settings, {
         version: '1.0.0',
         max_free_alarms: 1,
         max_free_clocks: 3,
+        charges: { PAYMENT: [], REFUNDS: [] },
       });
     } else current = response[0];
     return current;
@@ -37,7 +39,13 @@ export class SettingsService {
 
   update_count = async (
     body: Partial<
-      Record<keyof Pick<SettingSchema, 'max_free_alarms' | 'max_free_clocks'>, number>
+      Record<
+        keyof Pick<
+          SettingSchema,
+          'max_free_alarms' | 'max_free_clocks' | 'transaction_expiry_hours'
+        >,
+        number
+      >
     > = {},
     manager?: EntityManager,
   ) => {

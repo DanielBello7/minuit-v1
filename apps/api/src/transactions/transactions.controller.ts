@@ -1,34 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, ParseUUIDPipe, Query, UseGuards, Param } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { QueryTransactionByDatesDto } from './dto/query-transaction-by-dates.dto';
+import { QueryTransactionByIndexDto } from './dto/query-transaction-by-index.dto';
+import { JwtGuard } from '@/auth/guards';
 
+@UseGuards(JwtGuard)
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(private readonly transactions: TransactionsService) {}
 
-  @Post()
-  create(@Body() createTransactionDto: CreateTransactionDto) {
-    return this.transactionsService.create(createTransactionDto);
+  @Get('by-dates')
+  async get_by_dates(@Query() query: QueryTransactionByDatesDto) {
+    return this.transactions.get_by_dates(query);
   }
 
-  @Get()
-  findAll() {
-    return this.transactionsService.findAll();
+  @Get('by-index')
+  get_by_index(@Query() query: QueryTransactionByIndexDto) {
+    return this.transactions.get_by_index(query);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.transactionsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTransactionDto: UpdateTransactionDto) {
-    return this.transactionsService.update(+id, updateTransactionDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.transactionsService.remove(+id);
+  find_trx(@Param('id', ParseUUIDPipe) id: string) {
+    return this.transactions.find_by_id(id);
   }
 }

@@ -1,2 +1,2 @@
 export * from './flw.module';
-export * from './flw.service';
+export * from './flw.v4.service';

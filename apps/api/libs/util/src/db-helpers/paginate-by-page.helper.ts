@@ -26,7 +26,9 @@ export const safeNumber = (v: any, fallback: number) => {
   return Number.isFinite(Number(v)) ? Number(v) : fallback;
 };
 
-export async function paginate_by_page_helper<T extends ObjectLiteral & { created_at: Date }>(
+export async function paginate_by_page_helper<
+  T extends ObjectLiteral & { created_at: Date },
+>(
   query: Partial<T & Pagination>,
   db_entity: Repository<T>,
   options: Pick<FindManyOptions<T>, 'relations'> = {},
@@ -42,11 +44,17 @@ export async function paginate_by_page_helper<T extends ObjectLiteral & { create
 
   if (pagination) {
     if (pagination.page !== undefined) {
-      page = Math.max(MIN_PAGE_SIZE, safeNumber(pagination.page, MIN_PAGE_SIZE));
+      page = Math.max(
+        MIN_PAGE_SIZE,
+        safeNumber(pagination.page, MIN_PAGE_SIZE),
+      );
     }
 
     if (pagination.pick !== undefined) {
-      pick = Math.min(MAX_PICK_SIZE, safeNumber(pagination.pick, MAX_PICK_SIZE));
+      pick = Math.min(
+        MAX_PICK_SIZE,
+        safeNumber(pagination.pick, MAX_PICK_SIZE),
+      );
     }
 
     if (pagination.sort_by === 'ASC' || pagination.sort_by === 'DESC') {
@@ -70,10 +78,14 @@ export async function paginate_by_page_helper<T extends ObjectLiteral & { create
   qb.orderBy('entity.created_at', sort_by).skip(skip).take(pick);
 
   if (options && isArray(options.relations)) {
-    options.relations?.forEach((rel) => qb.leftJoinAndSelect(`entity.${rel}`, rel));
+    options.relations?.forEach((rel) =>
+      qb.leftJoinAndSelect(`entity.${rel}`, rel),
+    );
   }
   if (options && isObject(options.relations)) {
-    throw new BadRequestException('currently not supporting objects for relations');
+    throw new BadRequestException(
+      'currently not supporting objects for relations',
+    );
   }
   const [docs, count] = await qb.getManyAndCount();
   const total_pages = Math.ceil(count / pick);

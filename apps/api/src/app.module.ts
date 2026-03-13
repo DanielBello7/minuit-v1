@@ -32,6 +32,7 @@ import { FlwModule } from '@app/flw';
 import { SettingsModule } from './settings/settings.module';
 import { SettingSchema } from './settings/schemas/setting.schema';
 import * as fs from 'fs';
+import { SignupModule } from './signup/signup.module';
 
 @Module({
   imports: [
@@ -46,9 +47,10 @@ import * as fs from 'fs';
     ClocksModule,
     FeedbacksModule,
     PackagesModule,
+    SettingsModule,
+    SignupModule,
     SubsModule,
     TransactionsModule,
-    SettingsModule,
     JwtModule.register({
       global: true,
       secret: CONSTANTS.JWT_SECRET,

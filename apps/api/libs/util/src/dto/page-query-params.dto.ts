@@ -19,7 +19,7 @@ class PageQueryDto {
   pick: number;
   @IsOptional()
   @IsEnum(SORT_TYPE_ENUM)
-  sort: SORT_TYPE_ENUM;
+  sort?: SORT_TYPE_ENUM;
 }
 
 export class PageQueryParamsDto {

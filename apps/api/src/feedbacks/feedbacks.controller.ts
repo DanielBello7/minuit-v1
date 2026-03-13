@@ -1,34 +1,32 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { FeedbacksService } from './feedbacks.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
-import { UpdateFeedbackDto } from './dto/update-feedback.dto';
+import { JwtGuard } from '@/auth/guards';
+import { AllowRoles } from '@/auth/decorators/roles.decorator';
+import { AccountType } from '@repo/types';
+import { Public } from '@/auth/decorators/public.decorator';
+import { QueryFeedbackByDatesDto } from './dto/query-feedback-by-dates.dto';
+import { QueryFeedbackByIndexDto } from './dto/query-feedback-by-index.dto';
 
+@AllowRoles(AccountType.Admins)
+@UseGuards(JwtGuard)
 @Controller('feedbacks')
 export class FeedbacksController {
-  constructor(private readonly feedbacksService: FeedbacksService) {}
+  constructor(private readonly feedback: FeedbacksService) {}
 
+  @Public()
   @Post()
-  create(@Body() createFeedbackDto: CreateFeedbackDto) {
-    return this.feedbacksService.create(createFeedbackDto);
+  give_feedback(@Body() body: CreateFeedbackDto) {
+    return this.feedback.create(body);
   }
 
-  @Get()
-  findAll() {
-    return this.feedbacksService.findAll();
+  @Get('by-dates')
+  get_by_dates(query: QueryFeedbackByDatesDto) {
+    return this.feedback.get_by_dates(query);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.feedbacksService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFeedbackDto: UpdateFeedbackDto) {
-    return this.feedbacksService.update(+id, updateFeedbackDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.feedbacksService.remove(+id);
+  @Get('by-index')
+  get_by_index(query: QueryFeedbackByIndexDto) {
+    return this.feedback.get_by_index(query);
   }
 }

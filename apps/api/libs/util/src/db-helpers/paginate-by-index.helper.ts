@@ -1,10 +1,15 @@
-import { FindManyOptions, ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
-import { build_base_query } from './paginate-by-date.helper';
+import {
+  FindManyOptions,
+  ObjectLiteral,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { safeNumber } from './paginate-by-page.helper';
 import { IIndexPaginated } from '@repo/types';
 import { SORT_TYPE } from '@repo/types';
 import { isArray, isObject } from 'class-validator';
 import { BadRequestException } from '@nestjs/common';
+import { build_base_query } from './build-base-query';
 
 const MAX_PAGE_SIZE = 20;
 const MIN_PAGE_SIZE = 1;
@@ -22,21 +27,29 @@ type PaingationOption = {
 /**
  * Cursor pagination by procedural index
  */
-export async function paginate_by_index<T extends ObjectLiteral & { index: number }>(
+export async function paginate_by_index<
+  T extends ObjectLiteral & { index: number },
+>(
   query: Partial<PaingationOption & T>,
   repo: Repository<T>,
   extend?: (qb: SelectQueryBuilder<T>) => SelectQueryBuilder<T>,
   options?: Pick<FindManyOptions<T>, 'relations'>,
 ): Promise<IIndexPaginated<T>> {
   const { pagination, ...filters } = query;
-  const limit = Math.min(MAX_PAGE_SIZE, Math.max(MIN_PAGE_SIZE, safeNumber(pagination?.pick, 10)));
-  const order: 'ASC' | 'DESC' = pagination?.sort === 'ASC' ? 'ASC' : 'DESC';
+  const limit = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(MIN_PAGE_SIZE, safeNumber(pagination?.pick, 10)),
+  );
+  const order: 'ASC' | 'DESC' =
+    pagination?.sort === 'ASC' ? 'ASC' : 'DESC';
 
   const qb = build_base_query(repo, filters, extend);
 
   if (pagination?.index !== undefined) {
-    if (order === 'ASC') qb.andWhere('entity.index > :after', { after: pagination?.index });
-    else qb.andWhere('entity.index < :after', { after: pagination?.index });
+    if (order === 'ASC')
+      qb.andWhere('entity.index > :after', { after: pagination?.index });
+    else
+      qb.andWhere('entity.index < :after', { after: pagination?.index });
   }
 
   qb.orderBy('entity.index', order).take(limit);
@@ -54,7 +67,8 @@ export async function paginate_by_index<T extends ObjectLiteral & { index: numbe
         const part = parts[i];
 
         const join_path = `${current_path}.${part}`;
-        const join_name = i === 0 ? part : `${parts.slice(0, i + 1).join('_')}`;
+        const join_name =
+          i === 0 ? part : `${parts.slice(0, i + 1).join('_')}`;
 
         const join_key = `${join_path}__${join_name}`;
         if (!joined.has(join_key)) {
@@ -69,11 +83,14 @@ export async function paginate_by_index<T extends ObjectLiteral & { index: numbe
   }
 
   if (options && isObject(options.relations)) {
-    throw new BadRequestException('currently not supporting objects for relations');
+    throw new BadRequestException(
+      'currently not supporting objects for relations',
+    );
   }
 
   const docs = await qb.getMany();
-  const next_cuursor = docs.length > 0 ? docs[docs.length - 1].index : null;
+  const next_cuursor =
+    docs.length > 0 ? docs[docs.length - 1].index : null;
 
   return {
     docs,

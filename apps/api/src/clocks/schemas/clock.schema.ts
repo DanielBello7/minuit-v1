@@ -1,9 +1,10 @@
 import { CommonBase } from '@app/util';
 import { CLOCK_FORMAT, IClock } from '@repo/types';
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Unique } from 'typeorm';
 
 // prettier-ignore
 @Entity("clocks")
+@Unique(["user_id", "city"])
 export class ClockSchema extends CommonBase implements IClock {
   @Column({ type: 'uuid' }) user_id: string;
   @Column({ type: 'varchar' }) city: string;

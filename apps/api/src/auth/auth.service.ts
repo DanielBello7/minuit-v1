@@ -317,7 +317,7 @@ export class AuthService {
     const perform = async (em: EntityManager) => {
       const token = await this.jwt.signAsync(body);
       const refresh = await this.jwt.signAsync(body, {
-        expiresIn: CONSTANTS.JWT_EXPIRES_IN as any,
+        expiresIn: CONSTANTS.REFRESH_JWT_EXPIRES_IN as any,
       });
 
       const exp = datefns.addHours(new Date(), parseInt(CONSTANTS.JWT_EXPIRES_IN, 10));

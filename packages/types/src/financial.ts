@@ -1,9 +1,5 @@
 import { ICommon } from "./common";
-
-export enum CURRENCY_ENUM {
-	USD = "usd",
-	NGN = "ngn",
-}
+import { CurrencyCode } from "./puddle";
 
 export enum DURATION_PERIOD_ENUM {
 	MONTHS = "MONTHS",
@@ -13,7 +9,7 @@ export enum DURATION_PERIOD_ENUM {
 }
 
 export type PricingType = {
-	currency: CURRENCY_ENUM;
+	currency_code: CurrencyCode;
 	amount: string;
 };
 
@@ -28,7 +24,7 @@ export type IPackage = ICommon & {
 };
 
 export enum TRANSACTION_TYPE_ENUM {
-	REFUND = "REFUND",
+	REFUNDS = "REFUNDS",
 	PAYMENT = "PAYMENT",
 }
 
@@ -36,19 +32,45 @@ export enum TRANSACTION_STATUS_ENUM {
 	PENDING = "PENDING",
 	COMPLETED = "COMPLETED",
 	FAILED = "FAILED",
+	EXPIRED = "EXPIRED",
+	PROCESSING = "PROCESSING",
 }
 
-export type ITransactions = ICommon & {
-	narration: string;
-	user_id: string;
+export type IPaymentTxMetadata = {
+	reason: string;
+	ref_id: string | undefined;
+};
+
+export type IRefundsTxMetadata = {
+	reason: string;
+	og_trx_id: string;
+};
+
+export type ITransactionsBase = ICommon & {
 	charge: string;
 	amount: string;
-	currency: CURRENCY_ENUM;
-	gateway: string;
-	method: string;
+	method: string | undefined;
+	currency_code: CurrencyCode;
+	narration: string | undefined;
+	user_id: string;
+	gateway: string | undefined;
+	expires_at: Date;
 	type: TRANSACTION_TYPE_ENUM;
 	status: TRANSACTION_STATUS_ENUM;
+	metadata: Record<string, any>;
 };
+
+export type IPaymentTx = ITransactionsBase & {
+	type: TRANSACTION_TYPE_ENUM.PAYMENT;
+	metadata: IPaymentTxMetadata;
+};
+
+export type IRefundsTx = ITransactionsBase & {
+	type: TRANSACTION_TYPE_ENUM.REFUNDS;
+	metadata: IRefundsTxMetadata;
+};
+
+export type ITransactions = IPaymentTx | IRefundsTx;
 
 export type IActiveSubs = ICommon & {
 	user_id: string;
@@ -60,7 +82,7 @@ export type ISubscription = ICommon & {
 	transaction_id: string;
 	user_id: string;
 	package_id: string;
-	currency: CURRENCY_ENUM;
+	currency_code: CurrencyCode;
 	amount: string;
 	charge: string;
 	duration: number;
