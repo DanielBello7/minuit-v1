@@ -58,7 +58,7 @@ describe('FeedbacksService (integration)', () => {
     await repo.deleteAll();
   });
 
-  async function createFeedback(overrides: Partial<CreateFeedbackDto> = {}) {
+  async function create_feedback(overrides: Partial<CreateFeedbackDto> = {}) {
     return service.create({
       name: 'User',
       message: 'Message',
@@ -69,7 +69,7 @@ describe('FeedbacksService (integration)', () => {
 
   describe('create', () => {
     it('creates and returns feedback', async () => {
-      const result = await createFeedback({
+      const result = await create_feedback({
         name: 'Alice',
         message: 'Great',
         rating: 4,
@@ -89,9 +89,9 @@ describe('FeedbacksService (integration)', () => {
     });
 
     it('returns first page with pick size and next cursor', async () => {
-      await createFeedback({ name: 'A', message: '1', rating: 1 });
-      await createFeedback({ name: 'B', message: '2', rating: 2 });
-      await createFeedback({ name: 'C', message: '3', rating: 3 });
+      await create_feedback({ name: 'A', message: '1', rating: 1 });
+      await create_feedback({ name: 'B', message: '2', rating: 2 });
+      await create_feedback({ name: 'C', message: '3', rating: 3 });
 
       const result = await service.get_by_dates({
         pagination: { pick: 2, sort: SORT_TYPE_ENUM.DESC },
@@ -105,17 +105,17 @@ describe('FeedbacksService (integration)', () => {
     });
 
     it('returns next section when using date cursor (pointer)', async () => {
-      const a = await createFeedback({
+      const a = await create_feedback({
         name: 'First',
         message: '1',
         rating: 1,
       });
-      const b = await createFeedback({
+      const b = await create_feedback({
         name: 'Second',
         message: '2',
         rating: 2,
       });
-      const c = await createFeedback({
+      const c = await create_feedback({
         name: 'Third',
         message: '3',
         rating: 3,
@@ -142,8 +142,8 @@ describe('FeedbacksService (integration)', () => {
     });
 
     it('respects sort ASC (oldest first)', async () => {
-      await createFeedback({ name: 'Old', message: '1', rating: 1 });
-      await createFeedback({ name: 'New', message: '2', rating: 2 });
+      await create_feedback({ name: 'Old', message: '1', rating: 1 });
+      await create_feedback({ name: 'New', message: '2', rating: 2 });
 
       const result = await service.get_by_dates({
         pagination: { pick: 10, sort: SORT_TYPE_ENUM.ASC },
@@ -154,9 +154,9 @@ describe('FeedbacksService (integration)', () => {
     });
 
     it('filters by name', async () => {
-      await createFeedback({ name: 'Alice', message: 'a', rating: 1 });
-      await createFeedback({ name: 'Bob', message: 'b', rating: 2 });
-      await createFeedback({ name: 'Alice', message: 'c', rating: 3 });
+      await create_feedback({ name: 'Alice', message: 'a', rating: 1 });
+      await create_feedback({ name: 'Bob', message: 'b', rating: 2 });
+      await create_feedback({ name: 'Alice', message: 'c', rating: 3 });
 
       const result = await service.get_by_dates({ name: 'Alice' });
       expect(result.docs.length).toBe(2);
@@ -164,9 +164,9 @@ describe('FeedbacksService (integration)', () => {
     });
 
     it('filters by rating', async () => {
-      await createFeedback({ name: 'A', message: 'a', rating: 5 });
-      await createFeedback({ name: 'B', message: 'b', rating: 3 });
-      await createFeedback({ name: 'C', message: 'c', rating: 5 });
+      await create_feedback({ name: 'A', message: 'a', rating: 5 });
+      await create_feedback({ name: 'B', message: 'b', rating: 3 });
+      await create_feedback({ name: 'C', message: 'c', rating: 5 });
 
       const result = await service.get_by_dates({ rating: 5 } as QueryFeedbackByDatesDto);
       expect(result.docs.length).toBe(2);
@@ -182,9 +182,9 @@ describe('FeedbacksService (integration)', () => {
     });
 
     it('returns first page with pick size and next index cursor', async () => {
-      await createFeedback({ name: 'A', message: '1', rating: 1 });
-      await createFeedback({ name: 'B', message: '2', rating: 2 });
-      await createFeedback({ name: 'C', message: '3', rating: 3 });
+      await create_feedback({ name: 'A', message: '1', rating: 1 });
+      await create_feedback({ name: 'B', message: '2', rating: 2 });
+      await create_feedback({ name: 'C', message: '3', rating: 3 });
 
       const result = await service.get_by_index({
         pagination: { pick: 2, sort: SORT_TYPE_ENUM.DESC },
@@ -199,9 +199,9 @@ describe('FeedbacksService (integration)', () => {
     });
 
     it('returns next section when using index cursor (pointer)', async () => {
-      await createFeedback({ name: 'First', message: '1', rating: 1 });
-      await createFeedback({ name: 'Second', message: '2', rating: 2 });
-      await createFeedback({ name: 'Third', message: '3', rating: 3 });
+      await create_feedback({ name: 'First', message: '1', rating: 1 });
+      await create_feedback({ name: 'Second', message: '2', rating: 2 });
+      await create_feedback({ name: 'Third', message: '3', rating: 3 });
 
       const first = await service.get_by_index({
         pagination: { pick: 2, sort: SORT_TYPE_ENUM.DESC },
@@ -223,8 +223,8 @@ describe('FeedbacksService (integration)', () => {
     });
 
     it('respects sort ASC by index', async () => {
-      const a = await createFeedback({ name: 'A', message: '1', rating: 1 });
-      const b = await createFeedback({ name: 'B', message: '2', rating: 2 });
+      const a = await create_feedback({ name: 'A', message: '1', rating: 1 });
+      const b = await create_feedback({ name: 'B', message: '2', rating: 2 });
 
       const result = await service.get_by_index({
         pagination: { pick: 10, sort: SORT_TYPE_ENUM.ASC },
@@ -234,9 +234,9 @@ describe('FeedbacksService (integration)', () => {
     });
 
     it('filters by message', async () => {
-      await createFeedback({ name: 'X', message: 'hello', rating: 1 });
-      await createFeedback({ name: 'Y', message: 'world', rating: 2 });
-      await createFeedback({ name: 'Z', message: 'hello', rating: 3 });
+      await create_feedback({ name: 'X', message: 'hello', rating: 1 });
+      await create_feedback({ name: 'Y', message: 'world', rating: 2 });
+      await create_feedback({ name: 'Z', message: 'hello', rating: 3 });
 
       const result = await service.get_by_index({ message: 'hello' } as any);
       expect(result.docs.length).toBe(2);

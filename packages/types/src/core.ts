@@ -10,21 +10,32 @@ export enum WEEKDAYS_ENUM {
 	SUNDAY = "SUNDAY",
 }
 
-export enum REPEAT_TYPE_ENUM {
-	FOREVER = "FOREVER",
+export enum SCHEDULE_TYPE {
+	WEEKLY = "WEEKLY",
+	ONE_TIME = "ONE_TIME",
 }
 
-export type RingAtType = {
-	time: Date;
-	human_format: string; // 10:00AM, 02:00PM, 11:56AM
-	day: WEEKDAYS_ENUM;
-	repeat: REPEAT_TYPE_ENUM.FOREVER | Date;
+export type WeeklyRingAt = {
+	type: SCHEDULE_TYPE.WEEKLY;
+	weekday: WEEKDAYS_ENUM;
+	hour: number;
+	minute: number;
 	is_active: boolean;
 };
 
+export type OneTimeRingAt = {
+	type: SCHEDULE_TYPE.ONE_TIME;
+	date: string; // e.g. "2026-03-13"
+	hour: number;
+	minute: number;
+	is_active: boolean;
+};
+
+export type RingAtType = WeeklyRingAt | OneTimeRingAt;
+
 export type IAlarm = ICommon & {
 	user_id: string;
-	ring_at: REPEAT_TYPE_ENUM[];
+	ring_at: RingAtType[];
 	is_active: boolean;
 	city: string;
 	country: string;

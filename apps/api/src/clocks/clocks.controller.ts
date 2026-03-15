@@ -1,34 +1,43 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  ParseUUIDPipe,
+  Post,
+  Param,
+  Patch,
+  Body,
+  Delete,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ClocksService } from './clocks.service';
-import { CreateClockDto } from './dto/create-clock.dto';
 import { UpdateClockDto } from './dto/update-clock.dto';
+import { QueryClocksByPage } from './dto/query-clocks-by-index.dto';
+import { InsertClockDto } from './dto/insert-clock.dto';
+import { JwtGuard } from '@/auth/guards';
 
+@UseGuards(JwtGuard)
 @Controller('clocks')
 export class ClocksController {
-  constructor(private readonly clocksService: ClocksService) {}
-
-  @Post()
-  create(@Body() createClockDto: CreateClockDto) {
-    return this.clocksService.create(createClockDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.clocksService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clocksService.findOne(+id);
-  }
+  constructor(private readonly clocks: ClocksService) {}
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateClockDto: UpdateClockDto) {
-    return this.clocksService.update(+id, updateClockDto);
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() body: UpdateClockDto) {
+    return this.clocks.update(id, body);
+  }
+
+  @Post()
+  create(@Body() body: InsertClockDto) {
+    return this.clocks.insert(body);
+  }
+
+  @Get('by-page')
+  get_by_page(@Query() query: QueryClocksByPage) {
+    return this.clocks.get_by_pages(query);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clocksService.remove(+id);
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.clocks.remove(id);
   }
 }
