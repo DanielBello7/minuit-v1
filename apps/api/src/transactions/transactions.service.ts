@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { EntityManager, Repository } from 'typeorm';
@@ -54,7 +58,10 @@ export class TransactionsService {
    * @throws BadRequestException if validation fails
    * @throws InternalServerErrorException if no charge or currency is configured for the given currency code
    */
-  initiate_payment = async (body: InitiatePaymentDto, session?: EntityManager) => {
+  initiate_payment = async (
+    body: InitiatePaymentDto,
+    session?: EntityManager,
+  ) => {
     const errors = isValidDto(body, InitiatePaymentDto);
     if (errors.length > 0) throw new BadRequestException(errors);
 
@@ -64,9 +71,13 @@ export class TransactionsService {
       const charge = settings.charges.PAYMENT.find((i) =>
         is_same_ccy(i.currency_code, body.currency_code),
       );
-      const currency = settings.currencies.find((i) => is_same_ccy(i.code, body.currency_code));
+      const currency = settings.currencies.find((i) =>
+        is_same_ccy(i.code, body.currency_code),
+      );
       if (!charge) {
-        throw new InternalServerErrorException('Cannot find charge for transaction');
+        throw new InternalServerErrorException(
+          'Cannot find charge for transaction',
+        );
       }
       if (!currency) {
         throw new InternalServerErrorException('Cannot find currency');
@@ -79,6 +90,7 @@ export class TransactionsService {
           metadata: {
             reason: 'subscription payment',
             ref_id: undefined,
+            package_id: body.metadata.package_id,
           } as IPaymentTxMetadata,
           type: TRANSACTION_TYPE_ENUM.PAYMENT,
           user_id: user.id,
@@ -99,7 +111,10 @@ export class TransactionsService {
    * @returns The updated transaction with status COMPLETED and gateway/metadata set
    * @throws BadRequestException if already processed, payment failed, expired, wrong type, currency mismatch, or invalid amount
    */
-  complete_payment = async (body: CompletePaymentDto, session?: EntityManager) => {
+  complete_payment = async (
+    body: CompletePaymentDto,
+    session?: EntityManager,
+  ) => {
     const errors = isValidDto(body, CompletePaymentDto);
     if (errors.length > 0) throw new BadRequestException(errors);
 
@@ -111,7 +126,9 @@ export class TransactionsService {
       // make sure the transaction hasn't already been processed
       if (transaction.status !== TRANSACTION_STATUS_ENUM.PENDING) {
         return {
-          error: new BadRequestException('transaction is already processed'),
+          error: new BadRequestException(
+            'transaction is already processed',
+          ),
         };
       }
 
@@ -123,7 +140,11 @@ export class TransactionsService {
       }
 
       // lock the transaction and make sure it is idempotent
-      await this.update(body.id, { status: TRANSACTION_STATUS_ENUM.PROCESSING }, em);
+      await this.update(
+        body.id,
+        { status: TRANSACTION_STATUS_ENUM.PROCESSING },
+        em,
+      );
 
       // be sure the external transaction was successful
       if (payment.status !== 'successful') {
@@ -169,7 +190,9 @@ export class TransactionsService {
       const amount_expected = decimal_number(transaction.amount);
       const charge_amount_expected = decimal_number(transaction.charge);
       const total_amount_paid = decimal_number(payment.amount);
-      const total_amount_expected = amount_expected.add(charge_amount_expected);
+      const total_amount_expected = amount_expected.add(
+        charge_amount_expected,
+      );
 
       // confirm the amount paid is the amount expected are the same
       if (total_amount_paid.lessThan(total_amount_expected)) {
@@ -202,7 +225,9 @@ export class TransactionsService {
       return { data: response };
     };
 
-    const response = session ? await perform(session) : await this.mutations.execute(perform);
+    const response = session
+      ? await perform(session)
+      : await this.mutations.execute(perform);
 
     if (response?.error) throw response?.error;
     return response?.data;
@@ -215,7 +240,10 @@ export class TransactionsService {
    * @returns Result of the refund initiation (implementation in progress)
    * @throws BadRequestException if validation fails
    */
-  initiate_refunds = async (body: InitiateRefundsDto, session?: EntityManager) => {
+  initiate_refunds = async (
+    body: InitiateRefundsDto,
+    session?: EntityManager,
+  ) => {
     const errors = isValidDto(body, InitiateRefundsDto);
     if (errors.length > 0) throw new BadRequestException(errors);
 
@@ -225,20 +253,30 @@ export class TransactionsService {
       const charge = settings.charges.REFUNDS.find((i) =>
         is_same_ccy(i.currency_code, body.currency_code),
       );
-      const currency = settings.currencies.find((i) => is_same_ccy(i.code, body.currency_code));
+      const currency = settings.currencies.find((i) =>
+        is_same_ccy(i.code, body.currency_code),
+      );
       if (!charge) {
-        throw new InternalServerErrorException('Cannot find charge for transaction');
+        throw new InternalServerErrorException(
+          'Cannot find charge for transaction',
+        );
       }
       if (!currency) {
         throw new InternalServerErrorException('Cannot find currency');
       }
 
-      const og_transaction = await this.find_by_id_lock(body.metadata.og_trx_id, em);
+      const og_transaction = await this.find_by_id_lock(
+        body.metadata.og_trx_id,
+        em,
+      );
       if (og_transaction.status !== TRANSACTION_STATUS_ENUM.COMPLETED) {
         throw new BadRequestException('transaction is not refundable');
       }
 
-      const check_if_refunded = await this.find_og_transaction_id_lock(body.metadata.og_trx_id, em);
+      const check_if_refunded = await this.find_og_transaction_id_lock(
+        body.metadata.og_trx_id,
+        em,
+      );
       if (check_if_refunded) {
         throw new BadRequestException('Transaction already refunded');
       }
@@ -270,7 +308,10 @@ export class TransactionsService {
    * @returns Result of the refund completion (implementation in progress)
    * @throws BadRequestException if validation fails
    */
-  complete_refunds = async (body: CompleteRefundsDto, session?: EntityManager) => {
+  complete_refunds = async (
+    body: CompleteRefundsDto,
+    session?: EntityManager,
+  ) => {
     const errors = isValidDto(body, CompleteRefundsDto);
     if (errors.length > 0) throw new BadRequestException(errors);
 
@@ -283,10 +324,18 @@ export class TransactionsService {
         };
       }
 
-      await this.update(body.id, { status: TRANSACTION_STATUS_ENUM.PROCESSING }, em);
+      await this.update(
+        body.id,
+        { status: TRANSACTION_STATUS_ENUM.PROCESSING },
+        em,
+      );
 
       if (isPast(transaction.expires_at)) {
-        await this.update(body.id, { status: TRANSACTION_STATUS_ENUM.EXPIRED }, em);
+        await this.update(
+          body.id,
+          { status: TRANSACTION_STATUS_ENUM.EXPIRED },
+          em,
+        );
         return { error: new BadRequestException('transaction expired') };
       }
 
@@ -304,7 +353,11 @@ export class TransactionsService {
       });
 
       if (response.status !== 'successful') {
-        await this.update(transaction.id, { status: TRANSACTION_STATUS_ENUM.FAILED }, em);
+        await this.update(
+          transaction.id,
+          { status: TRANSACTION_STATUS_ENUM.FAILED },
+          em,
+        );
         return { error: new BadRequestException('Error occured') };
       }
 
@@ -318,7 +371,9 @@ export class TransactionsService {
       return { data: result };
     };
 
-    const response = session ? await perform(session) : await this.mutations.execute(perform);
+    const response = session
+      ? await perform(session)
+      : await this.mutations.execute(perform);
 
     if (response?.error) throw response?.error;
     return response.data;
@@ -331,7 +386,10 @@ export class TransactionsService {
    * @param session - TypeORM entity manager (required for locking)
    * @returns The refund transaction with metadata.og_trx_id = trx_id, or undefined if none exists
    */
-  find_og_transaction_id_lock = async (trx_id: string, session: EntityManager) => {
+  find_og_transaction_id_lock = async (
+    trx_id: string,
+    session: EntityManager,
+  ) => {
     return session
       .getRepository(this.transactions.target)
       .createQueryBuilder('trx')
@@ -360,7 +418,10 @@ export class TransactionsService {
           method: undefined,
           gateway: undefined,
           status: TRANSACTION_STATUS_ENUM.PENDING,
-          expires_at: addHours(new Date(), settings.transaction_expiry_hours),
+          expires_at: addHours(
+            new Date(),
+            settings.transaction_expiry_hours,
+          ),
         },
         em,
       );
@@ -381,7 +442,11 @@ export class TransactionsService {
   create = async (body: CreateTransactionDto, session?: EntityManager) => {
     const errors = isValidDto(body, CreateTransactionDto);
     if (errors.length > 0) throw new BadRequestException(errors);
-    const response = await create_helper<TransactionSchema>(this.transactions, body, session);
+    const response = await create_helper<TransactionSchema>(
+      this.transactions,
+      body,
+      session,
+    );
     return this.find_by_id(response.id, session);
   };
 
@@ -391,7 +456,9 @@ export class TransactionsService {
    * @returns Paginated list of transactions with relations
    * @throws BadRequestException if validation fails
    */
-  get_by_index = async (query: Partial<QueryTransactionByIndexDto> = {}) => {
+  get_by_index = async (
+    query: Partial<QueryTransactionByIndexDto> = {},
+  ) => {
     const errors = isValidDto(query, QueryTransactionByIndexDto);
     if (errors.length > 0) throw new BadRequestException(errors);
     return paginate_by_index(query, this.transactions, undefined, {
@@ -405,7 +472,9 @@ export class TransactionsService {
    * @returns Paginated list of transactions with relations
    * @throws BadRequestException if validation fails
    */
-  get_by_dates = async (query: Partial<QueryTransactionByDatesDto> = {}) => {
+  get_by_dates = async (
+    query: Partial<QueryTransactionByDatesDto> = {},
+  ) => {
     const errors = isValidDto(query, QueryTransactionByDatesDto);
     if (errors.length > 0) throw new BadRequestException(errors);
     return paginate_by_date_helper(query, this.transactions, undefined, {
@@ -420,7 +489,12 @@ export class TransactionsService {
    * @returns The transaction record or undefined if not found
    */
   find_by_id = async (id: string, session?: EntityManager) => {
-    return find_by_id_helper(this.transactions, id, { relations }, session);
+    return find_by_id_helper(
+      this.transactions,
+      id,
+      { relations },
+      session,
+    );
   };
 
   /**
@@ -441,7 +515,11 @@ export class TransactionsService {
    * @returns The updated transaction with relations
    * @throws BadRequestException if validation fails
    */
-  update = async (id: string, body: UpdateTransactionDto, session?: EntityManager) => {
+  update = async (
+    id: string,
+    body: UpdateTransactionDto,
+    session?: EntityManager,
+  ) => {
     const errors = isValidDto(body, UpdateTransactionDto);
     if (errors.length > 0) throw new BadRequestException(errors);
     return update_by_id_helper(this.transactions, id, body, session, {

@@ -2,7 +2,10 @@
  * Integration tests for TransactionsService using Postgres test container.
  * Thorough tests for get_by_dates and get_by_index: cursor/pointer, next page, filtering.
  */
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -38,6 +41,7 @@ import type { IPaymentRefundResult } from '@app/util/interfaces/payment.interfac
 import { JwtModule } from '@nestjs/jwt';
 
 const PAYMENT_REF_ID = 'flw_ref_123';
+const TEST_PACKAGE_ID = 'c47a2774-2a6e-4a3b-9f1d-8e7c6b5a4321'; // valid UUID v4 for tests
 
 const TEST_JWT_SECRET = 'secret';
 
@@ -169,7 +173,11 @@ describe('TransactionsService (integration)', () => {
         user_id: userId,
         amount: '100',
         currency_code: NGN,
-        metadata: { reason: 'test', ref_id: undefined },
+        metadata: {
+          reason: 'test',
+          ref_id: undefined,
+          package_id: TEST_PACKAGE_ID,
+        },
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
         charge: '5',
         expires_at: new Date(4),
@@ -204,7 +212,9 @@ describe('TransactionsService (integration)', () => {
       expect(result.pick).toBe(2);
       expect(result.has_next_page).toBe(true);
       expect(result.next_page).toBeDefined();
-      expect(result.next_page).toEqual(result.docs[result.docs.length - 1].created_at);
+      expect(result.next_page).toEqual(
+        result.docs[result.docs.length - 1].created_at,
+      );
     });
 
     it('returns next section when using date cursor (pointer)', async () => {
@@ -292,7 +302,9 @@ describe('TransactionsService (integration)', () => {
       expect(result.docs.length).toBe(2);
       expect(result.has_next_page).toBe(true);
       expect(typeof result.next_page).toBe('number');
-      expect(result.next_page).toBe(result.docs[result.docs.length - 1].index);
+      expect(result.next_page).toBe(
+        result.docs[result.docs.length - 1].index,
+      );
     });
 
     it('returns next section when using index cursor (pointer)', async () => {
@@ -354,7 +366,11 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment', ref_id: undefined },
+        metadata: {
+          reason: 'subscription payment',
+          ref_id: undefined,
+          package_id: TEST_PACKAGE_ID,
+        },
       };
 
       const result = await service.initiate_payment(body);
@@ -371,7 +387,9 @@ describe('TransactionsService (integration)', () => {
         reason: 'subscription payment',
       });
       expect(result.expires_at).toBeDefined();
-      expect(new Date(result.expires_at).getTime()).toBeGreaterThan(Date.now());
+      expect(new Date(result.expires_at).getTime()).toBeGreaterThan(
+        Date.now(),
+      );
     });
 
     it('throws BadRequestException when DTO validation fails', async () => {
@@ -382,7 +400,7 @@ describe('TransactionsService (integration)', () => {
           amount: 'invalid',
           currency_code: NGN,
           type: TRANSACTION_TYPE_ENUM.PAYMENT,
-          metadata: { reason: 'x' },
+          metadata: { reason: 'x', package_id: TEST_PACKAGE_ID },
         } as InitiatePaymentDto),
       ).rejects.toThrow(BadRequestException);
     });
@@ -395,7 +413,10 @@ describe('TransactionsService (integration)', () => {
           amount: '100',
           currency_code: 'EUR' as any, // not in seeded charges
           type: TRANSACTION_TYPE_ENUM.PAYMENT,
-          metadata: { reason: 'subscription payment' },
+          metadata: {
+            reason: 'subscription payment',
+            package_id: TEST_PACKAGE_ID,
+          },
         } as InitiatePaymentDto),
       ).rejects.toThrow(InternalServerErrorException);
 
@@ -405,7 +426,10 @@ describe('TransactionsService (integration)', () => {
           amount: '100',
           currency_code: 'EUR' as any,
           type: TRANSACTION_TYPE_ENUM.PAYMENT,
-          metadata: { reason: 'subscription payment' },
+          metadata: {
+            reason: 'subscription payment',
+            package_id: TEST_PACKAGE_ID,
+          },
         } as InitiatePaymentDto),
       ).rejects.toThrow('Cannot find charge for transaction');
     });
@@ -413,7 +437,10 @@ describe('TransactionsService (integration)', () => {
     it('throws InternalServerErrorException when no currency config', async () => {
       const user = await createUser();
       const settingRepo = dataSource.getRepository(SettingSchema);
-      await settingRepo.update({ id: '00000000-0000-0000-0000-000000000001' }, { currencies: [] });
+      await settingRepo.update(
+        { id: '00000000-0000-0000-0000-000000000001' },
+        { currencies: [] },
+      );
 
       await expect(
         service.initiate_payment({
@@ -421,7 +448,10 @@ describe('TransactionsService (integration)', () => {
           amount: '100',
           currency_code: NGN as any,
           type: TRANSACTION_TYPE_ENUM.PAYMENT,
-          metadata: { reason: 'subscription payment' },
+          metadata: {
+            reason: 'subscription payment',
+            package_id: TEST_PACKAGE_ID,
+          },
         } as InitiatePaymentDto),
       ).rejects.toThrow(InternalServerErrorException);
       await expect(
@@ -430,14 +460,20 @@ describe('TransactionsService (integration)', () => {
           amount: '100',
           currency_code: NGN as any,
           type: TRANSACTION_TYPE_ENUM.PAYMENT,
-          metadata: { reason: 'subscription payment' },
+          metadata: {
+            reason: 'subscription payment',
+            package_id: TEST_PACKAGE_ID,
+          },
         } as InitiatePaymentDto),
       ).rejects.toThrow('Cannot find currency');
     });
   });
 
   describe('complete_payment', () => {
-    function make_successful_payment(amount: number, currency: string): IPaymentPaymentResult {
+    function make_successful_payment(
+      amount: number,
+      currency: string,
+    ): IPaymentPaymentResult {
       return {
         status: 'successful',
         ref: PAYMENT_REF_ID,
@@ -460,7 +496,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
 
       (payment_stub.find_payment as jest.Mock).mockResolvedValue(
@@ -484,7 +523,9 @@ describe('TransactionsService (integration)', () => {
         reason: 'subscription payment',
         ref_id: PAYMENT_REF_ID,
       });
-      expect(payment_stub.find_payment).toHaveBeenCalledWith(PAYMENT_REF_ID);
+      expect(payment_stub.find_payment).toHaveBeenCalledWith(
+        PAYMENT_REF_ID,
+      );
     });
 
     it('throws BadRequestException when transaction is already processed', async () => {
@@ -494,13 +535,18 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
       await service.update(pending.id, {
         status: TRANSACTION_STATUS_ENUM.COMPLETED,
       });
 
-      (payment_stub.find_payment as jest.Mock).mockResolvedValue(make_successful_payment(105, NGN));
+      (payment_stub.find_payment as jest.Mock).mockResolvedValue(
+        make_successful_payment(105, NGN),
+      );
 
       await expect(
         service.complete_payment({
@@ -527,7 +573,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
 
       (payment_stub.find_payment as jest.Mock).mockResolvedValue({
@@ -566,11 +615,16 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
       await service.update(pending.id, { expires_at: new Date(0) } as any);
 
-      (payment_stub.find_payment as jest.Mock).mockResolvedValue(make_successful_payment(105, NGN));
+      (payment_stub.find_payment as jest.Mock).mockResolvedValue(
+        make_successful_payment(105, NGN),
+      );
 
       await expect(
         service.complete_payment({
@@ -610,7 +664,9 @@ describe('TransactionsService (integration)', () => {
         undefined,
       );
 
-      (payment_stub.find_payment as jest.Mock).mockResolvedValue(make_successful_payment(51, NGN));
+      (payment_stub.find_payment as jest.Mock).mockResolvedValue(
+        make_successful_payment(51, NGN),
+      );
 
       await expect(
         service.complete_payment({
@@ -637,7 +693,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
 
       (payment_stub.find_payment as jest.Mock).mockResolvedValue(
@@ -673,7 +732,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
 
       (payment_stub.find_payment as jest.Mock).mockResolvedValue(
@@ -712,7 +774,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
       (payment_stub.find_payment as jest.Mock).mockResolvedValue({
         status: 'successful',
@@ -764,7 +829,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
 
       await expect(
@@ -794,7 +862,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
       (payment_stub.find_payment as jest.Mock).mockResolvedValue({
         status: 'successful',
@@ -853,7 +924,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
       (payment_stub.find_payment as jest.Mock).mockResolvedValue({
         status: 'successful',
@@ -910,7 +984,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
       (payment_stub.find_payment as jest.Mock).mockResolvedValue({
         status: 'successful',
@@ -973,7 +1050,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
 
       (payment_stub.find_payment as jest.Mock).mockResolvedValue({
@@ -1026,7 +1106,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
 
       (payment_stub.refund_payment as jest.Mock).mockResolvedValue({
@@ -1059,7 +1142,10 @@ describe('TransactionsService (integration)', () => {
         amount: '100',
         currency_code: NGN as any,
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
-        metadata: { reason: 'subscription payment' },
+        metadata: {
+          reason: 'subscription payment',
+          package_id: TEST_PACKAGE_ID,
+        },
       } as InitiatePaymentDto);
       (payment_stub.find_payment as jest.Mock).mockResolvedValue({
         status: 'successful',

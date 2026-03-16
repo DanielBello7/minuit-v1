@@ -18,8 +18,8 @@ import { AccountType } from '@repo/types';
 
 const TEST_JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret';
 
-const userId = '00000000-0000-0000-4000-000000000001';
-const userId2 = '00000000-0000-0000-4000-000000000002';
+const user_id_1 = '5b8f3c1a-7e2d-4d9b-a6f4-1c9e3a7b5d22';
+const user_id_2 = 'c1a7e9f4-2d5b-4a6c-9e31-7f2b8d4c6a90';
 
 describe('AlarmsService (integration)', () => {
   const pg = new PostgresTestContainer();
@@ -27,9 +27,11 @@ describe('AlarmsService (integration)', () => {
   let service: AlarmsService;
   let dataSource: DataSource;
 
-  function validCreateDto(overrides: Partial<CreateAlarmDto> = {}): CreateAlarmDto {
+  function validCreateDto(
+    overrides: Partial<CreateAlarmDto> = {},
+  ): CreateAlarmDto {
     return {
-      user_id: userId,
+      user_id: user_id_1,
       ring_at: [
         {
           type: SCHEDULE_TYPE.WEEKLY,
@@ -86,7 +88,7 @@ describe('AlarmsService (integration)', () => {
     await userRepo.deleteAll();
     await userRepo.save(
       userRepo.create({
-        id: userId,
+        id: user_id_1,
         firstname: 'Test',
         surname: 'User',
         email: 'alarms@test.com',
@@ -102,7 +104,7 @@ describe('AlarmsService (integration)', () => {
     );
     await userRepo.save(
       userRepo.create({
-        id: userId2,
+        id: user_id_2,
         firstname: 'Other',
         surname: 'User',
         email: 'other@test.com',
@@ -118,7 +120,7 @@ describe('AlarmsService (integration)', () => {
     );
   });
 
-  async function createAlarm(overrides: Partial<CreateAlarmDto> = {}) {
+  async function create_alarm(overrides: Partial<CreateAlarmDto> = {}) {
     return service.create(validCreateDto(overrides));
   }
 
@@ -127,7 +129,7 @@ describe('AlarmsService (integration)', () => {
       const result = await service.create(validCreateDto());
       expect(result.id).toBeDefined();
       expect(result.city).toBe('Lagos');
-      expect(result.user_id).toBe(userId);
+      expect(result.user_id).toBe(user_id_1);
     });
   });
 
@@ -141,9 +143,9 @@ describe('AlarmsService (integration)', () => {
     });
 
     it('returns first page with pick size and total_docs', async () => {
-      await createAlarm({ city: 'Lagos' });
-      await createAlarm({ city: 'Abuja' });
-      await createAlarm({ city: 'Port Harcourt' });
+      await create_alarm({ city: 'Lagos' });
+      await create_alarm({ city: 'Abuja' });
+      await create_alarm({ city: 'Port Harcourt' });
 
       const result = await service.get_by_page({
         pagination: { page: 1, pick: 2 },
@@ -159,9 +161,9 @@ describe('AlarmsService (integration)', () => {
     });
 
     it('returns next page when using page pointer', async () => {
-      await createAlarm({ city: 'A' });
-      await createAlarm({ city: 'B' });
-      await createAlarm({ city: 'C' });
+      await create_alarm({ city: 'A' });
+      await create_alarm({ city: 'B' });
+      await create_alarm({ city: 'C' });
 
       const first = await service.get_by_page({
         pagination: { page: 1, pick: 2 },
@@ -178,20 +180,20 @@ describe('AlarmsService (integration)', () => {
     });
 
     it('filters by user_id', async () => {
-      await createAlarm({ user_id: userId, city: 'Lagos' });
-      await createAlarm({ user_id: userId2, city: 'Abuja' });
-      await createAlarm({ user_id: userId, city: 'PH' });
+      await create_alarm({ user_id: user_id_1, city: 'Lagos' });
+      await create_alarm({ user_id: user_id_2, city: 'Abuja' });
+      await create_alarm({ user_id: user_id_1, city: 'PH' });
 
-      const result = await service.get_by_page({ user_id: userId });
+      const result = await service.get_by_page({ user_id: user_id_1 });
       expect(result.docs.length).toBe(2);
-      result.docs.forEach((d) => expect(d.user_id).toBe(userId));
+      result.docs.forEach((d) => expect(d.user_id).toBe(user_id_1));
       expect(result.total_docs).toBe(2);
     });
 
     it('filters by city', async () => {
-      await createAlarm({ city: 'Lagos' });
-      await createAlarm({ city: 'Abuja' });
-      await createAlarm({ city: 'Lagos' });
+      await create_alarm({ city: 'Lagos' });
+      await create_alarm({ city: 'Abuja' });
+      await create_alarm({ city: 'Lagos' });
 
       const result = await service.get_by_page({ city: 'Lagos' });
       expect(result.docs.length).toBe(2);
@@ -201,11 +203,11 @@ describe('AlarmsService (integration)', () => {
 
   describe('find_by_id', () => {
     it('returns alarm with User relation when found', async () => {
-      const created = await createAlarm();
+      const created = await create_alarm();
       const result = await service.find_by_id(created.id);
       expect(result.id).toBe(created.id);
       expect(result.User).toBeDefined();
-      expect(result.User?.id).toBe(userId);
+      expect(result.User?.id).toBe(user_id_1);
     });
 
     it('throws when not found', async () => {
@@ -217,7 +219,7 @@ describe('AlarmsService (integration)', () => {
 
   describe('modify / update', () => {
     it('updates only ring_at (modify strips city, region, timezone, user_id, is_active)', async () => {
-      const created = await createAlarm();
+      const created = await create_alarm();
       const newRingAt = [
         {
           type: SCHEDULE_TYPE.WEEKLY,
@@ -227,7 +229,9 @@ describe('AlarmsService (integration)', () => {
           is_active: false,
         },
       ];
-      const updated = await service.modify(created.id, { ring_at: newRingAt } as any);
+      const updated = await service.modify(created.id, {
+        ring_at: newRingAt,
+      } as any);
       expect(updated.ring_at).toEqual(newRingAt);
       expect(updated.city).toBe(created.city);
     });
@@ -235,7 +239,7 @@ describe('AlarmsService (integration)', () => {
 
   describe('remove', () => {
     it('removes alarm by id', async () => {
-      const created = await createAlarm();
+      const created = await create_alarm();
       await service.remove(created.id);
       await expect(service.find_by_id(created.id)).rejects.toThrow();
     });

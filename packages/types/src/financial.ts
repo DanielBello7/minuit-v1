@@ -23,6 +23,7 @@ export type IPackage = ICommon & {
 	admin_id: string;
 };
 
+// note; this is necessary for only this application, doesn't need to get bloated
 export enum TRANSACTION_TYPE_ENUM {
 	REFUNDS = "REFUNDS",
 	PAYMENT = "PAYMENT",
@@ -39,6 +40,7 @@ export enum TRANSACTION_STATUS_ENUM {
 export type IPaymentTxMetadata = {
 	reason: string;
 	ref_id: string | undefined;
+	package_id: string;
 };
 
 export type IRefundsTxMetadata = {
@@ -87,7 +89,6 @@ export type ISubscription = ICommon & {
 	charge: string;
 	duration: number;
 	duration_period: DURATION_PERIOD_ENUM;
-	ref_id: string; // for the third party payment service
 	expires_at: Date;
 	last_used_at: Date | undefined;
 	used_at: Date | undefined;

@@ -1,4 +1,5 @@
 import { IsCurrencyCode, IsMoneyString } from '@app/util';
+import { IndexQueryParamsDto } from '@app/util/dto';
 import {
   BaseOmit,
   type CurrencyCode,
@@ -6,42 +7,44 @@ import {
   ISubscription,
 } from '@repo/types';
 import {
+  IsCurrency,
   IsDate,
   IsEnum,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsUUID,
-  Min,
 } from 'class-validator';
 
-export class CreateSubDto implements BaseOmit<ISubscription> {
-  @IsNotEmpty()
+export class QuerySubsByIndex
+  extends IndexQueryParamsDto
+  implements BaseOmit<ISubscription>
+{
+  @IsOptional()
   @IsUUID()
   transaction_id: string;
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
   user_id: string;
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
   package_id: string;
-  @IsNotEmpty()
+  @IsOptional()
   @IsCurrencyCode()
+  @IsCurrency()
   currency_code: CurrencyCode;
-  @IsNotEmpty()
+  @IsOptional()
   @IsMoneyString()
   amount: string;
-  @IsNotEmpty()
+  @IsOptional()
   @IsMoneyString()
   charge: string;
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
-  @Min(1)
   duration: number;
-  @IsNotEmpty()
+  @IsOptional()
   @IsEnum(DURATION_PERIOD_ENUM)
   duration_period: DURATION_PERIOD_ENUM;
-  @IsNotEmpty()
+  @IsOptional()
   @IsDate()
   expires_at: Date;
   @IsOptional()

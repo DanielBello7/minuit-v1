@@ -8,6 +8,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   ValidateNested,
 } from 'class-validator';
@@ -22,6 +23,10 @@ class PaymentTxMetadataDto implements IPaymentTxMetadata {
   @IsOptional()
   @IsString()
   ref_id: string | undefined;
+
+  @IsNotEmpty()
+  @IsUUID()
+  package_id: string;
 }
 
 export class InitiatePaymentDto extends OmitType(InsertTransactionDto, [

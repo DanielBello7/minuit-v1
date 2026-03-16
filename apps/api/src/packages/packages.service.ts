@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   create_helper,
   find_by_id_helper,
+  find_by_id_lock_helper,
   isValidDto,
   paginate_by_page_helper,
   remove_helper,
@@ -30,6 +31,10 @@ export class PackagesService {
 
   find_by_id = async (id: string, session?: EntityManager) => {
     return find_by_id_helper(this.packages, id, undefined, session);
+  };
+
+  find_by_id_lock = async (id: string, session: EntityManager) => {
+    return find_by_id_lock_helper(this.packages, id, session);
   };
 
   get_by_page = async (query: Partial<QueryPackagesByPageDto> = {}) => {
