@@ -38,3 +38,8 @@ export type IUserSerialized = Omit<
 	IUser,
 	"deleted_at" | "password" | "refresh_token" | "last_login_date"
 >;
+
+/** Admin document with populated User relation (API find_by_id). */
+export type IAdminWithUser = IAdmin & {
+	User: IUserSerialized;
+};

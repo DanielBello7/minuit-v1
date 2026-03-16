@@ -11,7 +11,11 @@ import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class QueryTransactionByDatesDto
   extends DateQueryParamsDto
-  implements Omit<BaseOmit<ITransactionsBase>, 'narration' | 'metadata'>
+  implements
+    Omit<
+      BaseOmit<ITransactionsBase>,
+      'narration' | 'metadata' | 'expires_at'
+    >
 {
   @IsOptional()
   @IsUUID()

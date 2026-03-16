@@ -9,11 +9,15 @@ import * as path from 'path';
  * This uses TypeORM's internal schema diff engine —
  * the same mechanism used by migration:generate.
  */
-const hasSchemaChanges = async (dataSource: DataSource): Promise<boolean> => {
+const hasSchemaChanges = async (
+  dataSource: DataSource,
+): Promise<boolean> => {
   const schemaBuilder = dataSource.driver.createSchemaBuilder();
   const sqlInMemory = await schemaBuilder.log();
 
-  return sqlInMemory.upQueries.length > 0 || sqlInMemory.downQueries.length > 0;
+  return (
+    sqlInMemory.upQueries.length > 0 || sqlInMemory.downQueries.length > 0
+  );
 };
 
 /**
@@ -38,7 +42,8 @@ export const create_migration = async (
 
     // Dynamically import the datasource
     const datasourceModule = await import(resolvedDatasourcePath);
-    dataSource = datasourceModule.default ?? datasourceModule.AppDataSource;
+    dataSource =
+      datasourceModule.default ?? datasourceModule.AppDataSource;
 
     if (!(dataSource instanceof DataSource)) {
       throw new Error(
@@ -53,7 +58,9 @@ export const create_migration = async (
     const hasChanges = await hasSchemaChanges(dataSource);
 
     if (!hasChanges) {
-      console.log('No schema changes detected — skipping migration generation');
+      console.log(
+        'No schema changes detected — skipping migration generation',
+      );
       return;
     }
 

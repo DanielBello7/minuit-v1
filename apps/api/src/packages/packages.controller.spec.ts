@@ -11,7 +11,7 @@ import { PackageSchema } from './schemas/package.schema';
 import { PackagesModule } from './packages.module';
 import { CreatePackagesDto } from './dto/create-package.dto';
 import { UpdatePackagesDto } from './dto/update-package.dto';
-import { DURATION_PERIOD_ENUM } from '@repo/types';
+import { DURATION_PERIOD_ENUM, PRICING_TYPE_ENUM } from '@repo/types';
 import { USD } from '@repo/types';
 import { PostgresTestContainer } from '@test/helpers/pg-test-container';
 import { JwtModule } from '@nestjs/jwt';
@@ -67,6 +67,7 @@ describe('PackagesController (integration)', () => {
       description: 'Pro plan',
       features: ['Feature A', 'Feature B'],
       duration: 30,
+      type: PRICING_TYPE_ENUM.PAID,
       duration_period: DURATION_PERIOD_ENUM.DAYS,
       admin_id: admin_id,
     };
@@ -156,7 +157,9 @@ describe('PackagesController (integration)', () => {
     });
 
     it('propagates errors for invalid id', async () => {
-      await expect(controller.remove('6e9a4c21-1f7b-4a3e-bd58-2a6f9c7d3b40')).rejects.toThrow();
+      await expect(
+        controller.remove('6e9a4c21-1f7b-4a3e-bd58-2a6f9c7d3b40'),
+      ).rejects.toThrow();
     });
   });
 });

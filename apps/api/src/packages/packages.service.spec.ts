@@ -9,7 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PackagesService } from './packages.service';
 import { PackageSchema } from './schemas/package.schema';
 import { CreatePackagesDto } from './dto/create-package.dto';
-import { DURATION_PERIOD_ENUM } from '@repo/types';
+import { DURATION_PERIOD_ENUM, PRICING_TYPE_ENUM } from '@repo/types';
 import { USD } from '@repo/types';
 import { PostgresTestContainer } from '@test/helpers/pg-test-container';
 import { JwtModule } from '@nestjs/jwt';
@@ -24,13 +24,16 @@ describe('PackagesService (integration)', () => {
   let service: PackagesService;
   let dataSource: DataSource;
 
-  function valid_create_dto(overrides: Partial<CreatePackagesDto> = {}): CreatePackagesDto {
+  function valid_create_dto(
+    overrides: Partial<CreatePackagesDto> = {},
+  ): CreatePackagesDto {
     return {
       pricings: [{ currency_code: USD, amount: '10.00' }],
       title: 'Pro',
       description: 'Pro plan',
       features: ['F1', 'F2'],
       duration: 30,
+      type: PRICING_TYPE_ENUM.PAID,
       duration_period: DURATION_PERIOD_ENUM.DAYS,
       admin_id: adminId,
       ...overrides,
@@ -91,8 +94,12 @@ describe('PackagesService (integration)', () => {
 
     it('returns first page with pick size and total_docs', async () => {
       await service.create(valid_create_dto());
-      await service.create(valid_create_dto({ title: 'Basic', description: 'Basic' }));
-      await service.create(valid_create_dto({ title: 'Premium', description: 'Premium' }));
+      await service.create(
+        valid_create_dto({ title: 'Basic', description: 'Basic' }),
+      );
+      await service.create(
+        valid_create_dto({ title: 'Premium', description: 'Premium' }),
+      );
 
       const result = await service.get_by_page({
         pagination: { page: 1, pick: 2 },
@@ -128,9 +135,15 @@ describe('PackagesService (integration)', () => {
     });
 
     it('filters by title', async () => {
-      await service.create(valid_create_dto({ title: 'Pro', description: 'Pro' }));
-      await service.create(valid_create_dto({ title: 'Basic', description: 'Basic' }));
-      await service.create(valid_create_dto({ title: 'Pro', description: 'Pro Plus' }));
+      await service.create(
+        valid_create_dto({ title: 'Pro', description: 'Pro' }),
+      );
+      await service.create(
+        valid_create_dto({ title: 'Basic', description: 'Basic' }),
+      );
+      await service.create(
+        valid_create_dto({ title: 'Pro', description: 'Pro Plus' }),
+      );
 
       const result = await service.get_by_page({ title: 'Pro' });
       expect(result.docs.length).toBe(2);
@@ -140,9 +153,15 @@ describe('PackagesService (integration)', () => {
 
     it('filters by admin_id', async () => {
       const otherAdminId = '6e9a4c21-1f7b-4a3e-bd58-2a6f9c7d3b40';
-      await service.create(valid_create_dto({ title: 'P1', admin_id: adminId }));
-      await service.create(valid_create_dto({ title: 'P2', admin_id: otherAdminId }));
-      await service.create(valid_create_dto({ title: 'P3', admin_id: adminId }));
+      await service.create(
+        valid_create_dto({ title: 'P1', admin_id: adminId }),
+      );
+      await service.create(
+        valid_create_dto({ title: 'P2', admin_id: otherAdminId }),
+      );
+      await service.create(
+        valid_create_dto({ title: 'P3', admin_id: adminId }),
+      );
 
       const result = await service.get_by_page({ admin_id: adminId });
       expect(result.docs.length).toBe(2);

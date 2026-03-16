@@ -8,7 +8,7 @@ export class AdminsController {
   constructor(private readonly admins: AdminsService) {}
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  find_by_id(@Param('id') id: string) {
     return this.admins.find_by_id(id);
   }
 }

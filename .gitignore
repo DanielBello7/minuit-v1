@@ -6,11 +6,14 @@ node_modules
 .pnp.js
 
 # Local env files
+apps/mobile/.env.production
+**/.env*
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
 
 # Testing
 coverage

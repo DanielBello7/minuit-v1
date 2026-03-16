@@ -89,7 +89,10 @@ describe('AdminsController (integration)', () => {
     await userRepo.deleteAll();
   });
 
-  async function createAdmin(): Promise<{ adminId: string; userId: string }> {
+  async function createAdmin(): Promise<{
+    adminId: string;
+    userId: string;
+  }> {
     const hashed = bcrypt.hashSync('adminpass', CONSTANTS.HASH ?? 10);
     const user = await usersService.create_user({
       ...baseCreateUserDto,
@@ -108,7 +111,7 @@ describe('AdminsController (integration)', () => {
     it('returns admin when id exists', async () => {
       const { adminId, userId } = await createAdmin();
 
-      const result = await controller.findOne(adminId);
+      const result = await controller.find_by_id(adminId);
 
       expect(result).toBeDefined();
       expect(result.id).toBe(adminId);
@@ -118,7 +121,9 @@ describe('AdminsController (integration)', () => {
     });
 
     it('propagates errors for invalid id', async () => {
-      await expect(controller.findOne('00000000-0000-0000-0000-000000000000')).rejects.toThrow();
+      await expect(
+        controller.find_by_id('00000000-0000-0000-0000-000000000000'),
+      ).rejects.toThrow();
     });
   });
 });

@@ -1,11 +1,25 @@
 import { PageQueryParamsDto } from '@app/util/dto';
-import { BaseOmit, DURATION_PERIOD_ENUM, IPackage } from '@repo/types';
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  BaseOmit,
+  DURATION_PERIOD_ENUM,
+  IPackage,
+  PRICING_TYPE_ENUM,
+} from '@repo/types';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class QueryPackagesByPageDto
   extends PageQueryParamsDto
   implements Omit<BaseOmit<IPackage>, 'pricings' | 'features'>
 {
+  @IsOptional()
+  @IsEnum(PRICING_TYPE_ENUM)
+  type: PRICING_TYPE_ENUM;
   @IsOptional()
   @IsString()
   title: string;

@@ -121,7 +121,6 @@ export class TransactionsService {
     const perform = async (em: EntityManager) => {
       // get the required transaction and external payment
       const transaction = await this.find_by_id_lock(body.id, em);
-      const payment = await this.paymemts.find_payment(body.ref_id);
 
       // make sure the transaction hasn't already been processed
       if (transaction.status !== TRANSACTION_STATUS_ENUM.PENDING) {
@@ -146,19 +145,6 @@ export class TransactionsService {
         em,
       );
 
-      // be sure the external transaction was successful
-      if (payment.status !== 'successful') {
-        await this.update(
-          body.id,
-          {
-            status: TRANSACTION_STATUS_ENUM.FAILED,
-            narration: payment.narration,
-          },
-          em,
-        );
-        return { error: new BadRequestException('Payment failed') };
-      }
-
       // make sure the transaction isn't expired
       if (isPast(transaction.expires_at)) {
         await this.update(
@@ -172,6 +158,40 @@ export class TransactionsService {
         return {
           error: new BadRequestException('transaction is expired'),
         };
+      }
+
+      if (decimal_number(transaction.amount).lessThanOrEqualTo(0)) {
+        // update the body of the transaction
+        const response = await this.update(
+          body.id,
+          {
+            method: body.method,
+            status: TRANSACTION_STATUS_ENUM.COMPLETED,
+            gateway: body.gateway,
+            narration: 'payment completed successfully',
+            metadata: {
+              ...transaction.metadata,
+              ref_id: body.ref_id,
+            } as IPaymentTxMetadata,
+          },
+          em,
+        );
+        return { data: response };
+      }
+
+      const payment = await this.paymemts.find_payment(body.ref_id);
+
+      // be sure the external transaction was successful
+      if (payment.status !== 'successful') {
+        await this.update(
+          body.id,
+          {
+            status: TRANSACTION_STATUS_ENUM.FAILED,
+            narration: payment.narration,
+          },
+          em,
+        );
+        return { error: new BadRequestException('Payment failed') };
       }
 
       // make sure the currency between the paid one and the transaction is the same

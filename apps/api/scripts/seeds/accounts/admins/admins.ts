@@ -17,7 +17,9 @@ class AdminSeeder implements Seeder {
       await repo.save(repo.create(row));
       inserted++;
     }
-    console.log(`Admins: ${inserted} inserted, ${skipped} skipped (total ${adminsSeed.length}).`);
+    console.log(
+      `Admins: ${inserted} inserted, ${skipped} skipped (total ${adminsSeed.length}).`,
+    );
   }
 }
 

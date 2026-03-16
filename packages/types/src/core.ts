@@ -1,4 +1,5 @@
 import { ICommon } from "./common";
+import type { IUserSerialized } from "./users";
 
 export enum WEEKDAYS_ENUM {
 	MONDAY = "MONDAY",
@@ -41,6 +42,11 @@ export type IAlarm = ICommon & {
 	country: string;
 	region: string;
 	timezone: string;
+};
+
+/** Alarm document with populated User relation (API find_by_id, create, update). */
+export type IAlarmWithUser = IAlarm & {
+	User: IUserSerialized;
 };
 
 export enum CLOCK_FORMAT {

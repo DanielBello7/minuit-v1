@@ -1,5 +1,6 @@
 import { ICommon } from "./common";
 import { CurrencyCode } from "./puddle";
+import type { IUserSerialized } from "./users";
 
 export enum DURATION_PERIOD_ENUM {
 	MONTHS = "MONTHS",
@@ -13,7 +14,13 @@ export type PricingType = {
 	amount: string;
 };
 
+export enum PRICING_TYPE_ENUM {
+	PAID = "PAID",
+	FREE = "FREE",
+}
+
 export type IPackage = ICommon & {
+	type: PRICING_TYPE_ENUM;
 	pricings: PricingType[];
 	title: string;
 	description: string;
@@ -73,6 +80,11 @@ export type IRefundsTx = ITransactionsBase & {
 };
 
 export type ITransactions = IPaymentTx | IRefundsTx;
+
+/** Transaction document with populated User relation (API find_by_id, get_by_dates, get_by_index). */
+export type ITransactionsWithUser = ITransactions & {
+	User: IUserSerialized;
+};
 
 export type IActiveSubs = ICommon & {
 	user_id: string;

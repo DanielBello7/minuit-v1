@@ -1,42 +1,51 @@
 import {
   Controller,
+  Query,
   Get,
+  Param,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
+  ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { SubsService } from './subs.service';
-import { CreateSubDto } from './dto/create-sub.dto';
-import { UpdateSubDto } from './dto/update-sub.dto';
+import { QuerySubsByIndex } from './dto/query-sub.dto';
+import { JwtGuard } from '@/auth/guards';
+import { InsertSubDto } from './dto/insert-sub.dto';
+import { CompletePaymentDto } from '@/transactions/dto/payment/complete-payment.dto';
 
+@UseGuards(JwtGuard)
 @Controller('subs')
 export class SubsController {
-  constructor(private readonly subsService: SubsService) {}
+  constructor(private readonly subs: SubsService) {}
 
-  @Post()
-  create(@Body() createSubDto: CreateSubDto) {
-    return this.subsService.create_sub(createSubDto);
+  @Post('initiate-subscription')
+  initiate_subscripton(@Body() body: InsertSubDto) {
+    return this.subs.initiate_subscription_purchase(body);
   }
 
-  @Get()
-  findAll() {
-    return this.subsService.findAll();
+  @Post('get-free-package')
+  get_free_package(@Body() body: InsertSubDto) {
+    return this.subs.get_free_package(body);
+  }
+
+  @Post('complete-subscription')
+  complete_subscripton(@Body() body: CompletePaymentDto) {
+    return this.subs.complete_subscription_purchase(body);
+  }
+
+  @Get('by-index')
+  get_by_index(@Query() query: QuerySubsByIndex) {
+    return this.subs.get_subs_by_index(query);
+  }
+
+  @Get('users/:id')
+  get_user_sub(@Param('id', ParseUUIDPipe) id: string) {
+    return this.subs.find_hub_by_user_id(id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.subsService.find_sub_by_id(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSubDto: UpdateSubDto) {
-    return this.subsService.update_sub_by_id(+id, updateSubDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.subsService.remove(+id);
+  get_subscription_by_id(@Param('id', ParseUUIDPipe) id: string) {
+    return this.subs.find_sub_by_id(id);
   }
 }

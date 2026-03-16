@@ -37,7 +37,10 @@ export class PackagesController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() body: UpdatePackagesDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdatePackagesDto,
+  ) {
     return this.packages.update(id, body);
   }
 

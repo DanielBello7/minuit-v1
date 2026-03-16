@@ -1,5 +1,6 @@
 /** Flutterwave Service V3 */
 import axios from 'axios';
+import { AxiosInstance } from 'axios';
 import { Inject, Injectable } from '@nestjs/common';
 import { Bank } from 'ng-banks/lib/types';
 import { type v3_flconfig } from './flw.module';
@@ -33,7 +34,7 @@ export class FlwService extends IPayment {
   private secretkey: string;
   private publickey: string;
   private processor: any;
-  private axios: axios.AxiosInstance;
+  private axios: AxiosInstance;
   private aCurrency: FLUTTERWAVE_CURRENCY_TYPE;
 
   constructor(@Inject('FLUTTERWAVE') private readonly flconfig: v3_flconfig) {
@@ -87,7 +88,6 @@ export class FlwService extends IPayment {
   };
 
   make_payment = async (params: IPaymentPaymentParams): Promise<IPaymentPaymentResult> => {
-    console.log('data', params);
     const response = await this.make_a_payment({
       account_bank: params.account_bank,
       account_number: params.account_number,
@@ -95,6 +95,7 @@ export class FlwService extends IPayment {
       beneficiary_name: params.beneficiary_name,
       currency: params.currency,
       narration: params.narration,
+      ref: params.ref
     });
     if (response.status === 'error') throw new Error(response.message);
     return {

@@ -24,6 +24,8 @@ import { QuerySubsByIndex } from './dto/query-sub.dto';
 import {
   DURATION_PERIOD_ENUM,
   IPaymentTxMetadata,
+  NGN,
+  PRICING_TYPE_ENUM,
   TRANSACTION_TYPE_ENUM,
 } from '@repo/types';
 import { CompletePaymentDto } from '@/transactions/dto/payment/complete-payment.dto';
@@ -62,32 +64,75 @@ export class SubsService {
     }
   };
 
+  get_free_package = async (body: InsertSubDto) => {
+    const parsed = sanitize(body, InsertSubDto);
+    return this.mutation.execute(async (em) => {
+      const user = await this.users.find_by_id_lock(body.user_id, em);
+      const _package = await this.packages.find_by_id_lock(
+        parsed.package_id,
+        em,
+      );
+
+      if (_package.type !== PRICING_TYPE_ENUM.FREE) {
+        throw new BadGatewayException('cannot process this package');
+      }
+
+      const transaction = await this.transactions.initiate_payment(
+        {
+          user_id: user.id,
+          type: TRANSACTION_TYPE_ENUM.PAYMENT,
+          currency_code: NGN,
+          amount: '0.00',
+          metadata: {
+            package_id: _package.id,
+            ref_id: undefined,
+            reason: 'free subscription purchase',
+          },
+        },
+        em,
+      );
+
+      const response = await this.complete_subscription_purchase({
+        gateway: 'internal',
+        id: transaction.id,
+        method: 'internal',
+        ref_id: 'internal',
+      });
+
+      return response;
+    });
+  };
+
   initiate_subscription_purchase = async (body: InsertSubDto) => {
     const parsed = sanitize(body, InsertSubDto);
 
     return this.mutation.execute(async (em) => {
       const user = await this.users.find_by_id_lock(body.user_id, em);
-      const packages = await this.packages.find_by_id_lock(
+      const _package = await this.packages.find_by_id_lock(
         parsed.package_id,
         em,
       );
 
-      const _package = packages.pricings.find(
+      if (_package.type !== PRICING_TYPE_ENUM.PAID) {
+        throw new BadGatewayException('cannot process this package');
+      }
+
+      const pricing = _package.pricings.find(
         (p) => p.currency_code === body.currency_code,
       );
-      if (!_package) throw new BadGatewayException('invalid currency');
+      if (!pricing) throw new BadGatewayException('invalid currency');
 
       const transaction = await this.transactions.initiate_payment(
         {
           user_id: user.id,
           type: TRANSACTION_TYPE_ENUM.PAYMENT,
           metadata: {
-            package_id: packages.id,
+            package_id: _package.id,
             reason: 'subscription purchase',
             ref_id: undefined,
           },
-          currency_code: _package.currency_code,
-          amount: decimal_number(_package.amount).toString(),
+          currency_code: pricing.currency_code,
+          amount: decimal_number(pricing.amount).toString(),
         },
         em,
       );
@@ -153,7 +198,7 @@ export class SubsService {
         : await this.insert_hub(
             {
               subscription_id: subscription.id,
-              user_id: transaction.id,
+              user_id: transaction.user_id,
             },
             em,
           );

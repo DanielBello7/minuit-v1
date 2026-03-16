@@ -17,12 +17,12 @@ import { CreateSubDto } from './dto/create-sub.dto';
 import {
   DURATION_PERIOD_ENUM,
   NGN,
+  PRICING_TYPE_ENUM,
   TRANSACTION_STATUS_ENUM,
   TRANSACTION_TYPE_ENUM,
 } from '@repo/types';
 import { PostgresTestContainer } from '@test/helpers/pg-test-container';
 import { JwtModule } from '@nestjs/jwt';
-import { MutationsModule } from '@app/mutations';
 import { SubsModule } from './subs.module';
 import { SettingsModule } from '@/settings/settings.module';
 import { SettingsService } from '@/settings/settings.service';
@@ -124,11 +124,12 @@ describe('SubsService (integration)', () => {
     );
   }
 
-  async function seed_package(id: string) {
+  async function seed_package(id: string, type = PRICING_TYPE_ENUM.PAID) {
     const repo = dataSource.getRepository(PackageSchema);
     await repo.save(
       repo.create({
         id,
+        type,
         title: 'Pro',
         description: 'Pro plan',
         features: ['F1'],
@@ -140,7 +141,11 @@ describe('SubsService (integration)', () => {
     );
   }
 
-  async function seed_transaction(id: string, user_id: string) {
+  async function seed_transaction(
+    id: string,
+    user_id: string,
+    package_id?: string,
+  ) {
     const repo = dataSource.getRepository(TransactionSchema);
     await repo.save(
       repo.create({
@@ -151,7 +156,11 @@ describe('SubsService (integration)', () => {
         currency_code: 'NGN',
         type: TRANSACTION_TYPE_ENUM.PAYMENT,
         status: TRANSACTION_STATUS_ENUM.COMPLETED,
-        metadata: { reason: 'test' },
+        metadata: {
+          reason: 'test',
+          ref_id: undefined,
+          package_id: package_id ?? valid_create_sub_dto().package_id,
+        },
         expires_at: new Date(Date.now() + 3600000),
       }),
     );
