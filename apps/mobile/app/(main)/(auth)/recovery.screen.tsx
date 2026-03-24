@@ -1,9 +1,5 @@
-import { Text, View } from "react-native";
+import { Recovery } from "@/features/recovery";
 
 export default function RecoverScreen() {
-  return (
-    <View>
-      <Text>Recover Screen</Text>
-    </View>
-  );
+  return <Recovery />;
 }

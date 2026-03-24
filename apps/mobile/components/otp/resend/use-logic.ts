@@ -16,6 +16,8 @@ export const useLogic = (email: string, type: OTP_TYPE) => {
         await api.auth.signin_verify({ email });
       } else if (type === "SIGNUP") {
         await api.signup.send_verify_otp({ email });
+      } else if (type === "RECOVER") {
+        await api.auth.recovery_verify({ email });
       } else {
         throw new Error("unknown type");
       }

@@ -12,6 +12,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { FONTS_OBJ } from "@/constants/assets/fonts";
 import { SonnerBox } from "@/components/sonner";
+
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import "react-native-reanimated";
 
@@ -72,6 +73,7 @@ const RootLayout = () => {
               }}
             >
               <Stack.Screen name="index" />
+              <Stack.Screen name="(main)" />
             </Stack>
             <SonnerBox />
           </View>

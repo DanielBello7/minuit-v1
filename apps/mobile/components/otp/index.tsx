@@ -20,7 +20,7 @@ type Props = {
 };
 
 export const OTP = (props: Props) => {
-  const logic = useLogic(props.oncomplete);
+  const logic = useLogic(props);
   const text = useThemeColor("BUTTON_PRIMARY_FOREGROUND");
 
   return (

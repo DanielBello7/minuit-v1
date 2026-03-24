@@ -2,9 +2,9 @@ import { PropsWithChildren, useState } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { ThemedText } from "@/components/themed/themed-text";
 import { ThemedView } from "@/components/themed/themed-view";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { COLOR_THEMES } from "@/constants/themes/colors";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import Feather from "@expo/vector-icons/Feather";
 
 export function Collapsible({
   children,
@@ -20,8 +20,8 @@ export function Collapsible({
         onPress={() => setIsOpen((value) => !value)}
         activeOpacity={0.8}
       >
-        <IconSymbol
-          name="chevron.right"
+        <Feather
+          name="chevron-right"
           size={18}
           weight="medium"
           color={

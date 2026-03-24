@@ -2,7 +2,7 @@ import { useAsync } from "@/hooks/use-async";
 import { z } from "zod";
 import { useForm, useWatch } from "react-hook-form";
 
-export type OTP_TYPE = "SIGNUP" | "SIGNIN";
+export type OTP_TYPE = "SIGNUP" | "SIGNIN" | "RECOVER";
 
 const schema = z.object({
   token: z.string().trim().min(6).max(6),
@@ -10,7 +10,11 @@ const schema = z.object({
 
 type SCHEMA_TYPE = z.infer<typeof schema>;
 
-export const useLogic = (action: (value: string) => Promise<void>) => {
+type Props = {
+  oncomplete: (v: string) => Promise<void>;
+};
+
+export const useLogic = (props: Props) => {
   const handler = useAsync();
 
   const form = useForm<SCHEMA_TYPE>({
@@ -22,7 +26,7 @@ export const useLogic = (action: (value: string) => Promise<void>) => {
   const submit = () =>
     handler.run(async () => {
       const parsed = schema.parse(form.getValues());
-      return await action(parsed.token);
+      return await props.oncomplete(parsed.token);
     });
 
   return {
