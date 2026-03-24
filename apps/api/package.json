@@ -32,6 +32,8 @@
     "@nestjs/typeorm": "^11.0.0",
     "@repo/libs": "workspace:*",
     "@repo/types": "workspace:*",
+    "@types/compression": "^1.8.1",
+    "@types/cookie-parser": "^1.4.10",
     "@types/multer": "^2.0.0",
     "@types/otp-generator": "^4.0.2",
     "@types/pg": "^8.18.0",
