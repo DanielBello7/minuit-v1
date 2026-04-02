@@ -19,8 +19,11 @@ type AppButtonProps = TouchableOpacityProps & {
  */
 export const ButtonA = ({ style, isLoading, ...rest }: AppButtonProps) => {
   const background = useThemeColor("BUTTON_PRIMARY_BACKGROUND");
+
   const disabled = useThemeColor("DISABLED");
+
   const scheme = useColorScheme();
+
   if (isLoading) {
     return (
       <AppTouchable
@@ -45,7 +48,12 @@ export const ButtonA = ({ style, isLoading, ...rest }: AppButtonProps) => {
   return (
     <AppTouchable
       {...rest}
-      style={[styles.button, { backgroundColor: background }, style]}
+      style={[
+        styles.button,
+        { backgroundColor: background },
+        rest.disabled && { backgroundColor: disabled },
+        style,
+      ]}
     />
   );
 };

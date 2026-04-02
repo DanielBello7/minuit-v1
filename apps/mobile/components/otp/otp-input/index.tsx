@@ -54,11 +54,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   input: {
-    fontSize: 40,
-    fontWeight: "700",
+    fontSize: 30,
+    fontWeight: "800",
     fontFamily: "InterRegular",
     paddingVertical: 10,
     textAlign: "center",
+    letterSpacing: 12,
   },
   focusBorder: {
     ...StyleSheet.absoluteFillObject,

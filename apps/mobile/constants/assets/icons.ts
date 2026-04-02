@@ -1,3 +1,3 @@
-const ICONS: any[] = [];
+const ICONS = {};
 
 export { ICONS };

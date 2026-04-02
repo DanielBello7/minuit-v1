@@ -62,6 +62,13 @@ export const OTP = (props: Props) => {
         <ButtonA
           onPress={logic.submit}
           isLoading={logic.isLoading}
+          disabled={
+            !logic.values.token
+              ? true
+              : logic.values.token.length > 5
+                ? false
+                : true
+          }
         >
           <ButtonTextA>
             Verify & {props.type === "SIGNIN" ? "Sign In" : "Sign Up"}

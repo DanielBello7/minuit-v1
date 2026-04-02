@@ -11,6 +11,7 @@ import { Platform, StyleSheet, View, StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { FONTS_OBJ } from "@/constants/assets/fonts";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SonnerBox } from "@/components/sonner";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -61,31 +62,33 @@ const RootLayout = () => {
   }
 
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={client}>
-        <ThemeProvider
-          value={colors === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <View style={styles.container}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(main)" />
-            </Stack>
-            <SonnerBox />
-          </View>
-          <StatusBar
-            animated={true}
-            barStyle={Platform.OS === "ios" ? "default" : "dark-content"}
-            translucent={true}
-            backgroundColor="transparent"
-          />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.flex}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={client}>
+          <ThemeProvider
+            value={colors === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <View style={styles.container}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              >
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(main)" />
+              </Stack>
+              <SonnerBox />
+            </View>
+            <StatusBar
+              animated={true}
+              barStyle={Platform.OS === "ios" ? "default" : "dark-content"}
+              translucent={true}
+              backgroundColor="transparent"
+            />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 };
 

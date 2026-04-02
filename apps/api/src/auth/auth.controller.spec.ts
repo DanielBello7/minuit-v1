@@ -138,7 +138,11 @@ describe('AuthController (integration)', () => {
     return { id: user.id, email: user.email };
   }
 
-  function reqWithUser(id: string, email: string, token?: string): ReqExpress {
+  function reqWithUser(
+    id: string,
+    email: string,
+    token?: string,
+  ): ReqExpress {
     return {
       user: {
         id,
@@ -153,11 +157,16 @@ describe('AuthController (integration)', () => {
   describe('sign_in_password', () => {
     it('returns signin response when req.user is set by guard', async () => {
       const { id, email, password } = await createUserWithPassword();
-      const signIn = await authService.authenticate({
+      await authService.authenticate({
         username: email,
         password,
       } as any);
-      const validUser = { id, email, name: 'Test User', type: AccountType.Client };
+      const validUser = {
+        id,
+        email,
+        name: 'Test User',
+        type: AccountType.Client,
+      };
       const req = reqWithUser(id, email);
       (req as any).user = validUser;
 
@@ -202,7 +211,10 @@ describe('AuthController (integration)', () => {
     });
 
     it('propagates NotFound when user id does not exist', async () => {
-      const req = reqWithUser('00000000-0000-0000-0000-000000000000', 'nobody@example.com');
+      const req = reqWithUser(
+        '00000000-0000-0000-0000-000000000000',
+        'nobody@example.com',
+      );
 
       await expect(controller.whoami(req)).rejects.toThrow();
     });
@@ -211,7 +223,10 @@ describe('AuthController (integration)', () => {
   describe('refresh', () => {
     it('returns new tokens when refresh matches', async () => {
       const { email, password } = await createUserWithPassword();
-      const signIn = await authService.authenticate({ username: email, password } as any);
+      const signIn = await authService.authenticate({
+        username: email,
+        password,
+      } as any);
       const payload: RefreshDto = { email, refresh: signIn.refresh };
 
       const result = await controller.refresh(payload);
@@ -222,11 +237,13 @@ describe('AuthController (integration)', () => {
     });
 
     it('propagates error when refresh invalid', async () => {
-      const { email } = await createUserWithPassword({ email: 'r@example.com' });
+      const { email } = await createUserWithPassword({
+        email: 'r@example.com',
+      });
 
-      await expect(controller.refresh({ email, refresh: 'invalid-refresh' })).rejects.toThrow(
-        'cannot find refresh',
-      );
+      await expect(
+        controller.refresh({ email, refresh: 'invalid-refresh' }),
+      ).rejects.toThrow('cannot find refresh');
     });
   });
 
@@ -238,7 +255,10 @@ describe('AuthController (integration)', () => {
         email: 'pwd@example.com',
       } as SigninEmailDto);
 
-      expect(result).toEqual({ type: 'PASSWORD', display_name: 'Test User' });
+      expect(result).toEqual({
+        type: 'PASSWORD',
+        display_name: 'Test User',
+      });
     });
 
     it('returns OTP type and sends OTP when user has no password', async () => {
@@ -256,7 +276,9 @@ describe('AuthController (integration)', () => {
   describe('signin_otp', () => {
     it('signs in with valid OTP and returns tokens', async () => {
       await createUserWithoutPassword({ email: 'otpuser@example.com' });
-      await controller.signin_otp_verify({ email: 'otpuser@example.com' } as SigninEmailDto);
+      await controller.signin_otp_verify({
+        email: 'otpuser@example.com',
+      } as SigninEmailDto);
       const sentOtp = (mailMock.sendotp as jest.Mock).mock.calls[0][0];
 
       const result = await controller.signin_otp({
@@ -270,7 +292,9 @@ describe('AuthController (integration)', () => {
 
     it('propagates error for wrong OTP', async () => {
       await createUserWithoutPassword({ email: 'otp2@example.com' });
-      await controller.signin_otp_verify({ email: 'otp2@example.com' } as SigninEmailDto);
+      await controller.signin_otp_verify({
+        email: 'otp2@example.com',
+      } as SigninEmailDto);
 
       await expect(
         controller.signin_otp({
@@ -297,7 +321,9 @@ describe('AuthController (integration)', () => {
       await createUserWithoutPassword({ email: 'nopwd@example.com' });
 
       await expect(
-        controller.verify_recovery_account({ email: 'nopwd@example.com' } as EmailDto),
+        controller.verify_recovery_account({
+          email: 'nopwd@example.com',
+        } as EmailDto),
       ).rejects.toThrow('error recovering user password');
     });
   });
@@ -305,7 +331,9 @@ describe('AuthController (integration)', () => {
   describe('validate_recovery_account', () => {
     it('returns true for valid recovery OTP', async () => {
       await createUserWithPassword({ email: 'v@example.com' });
-      await controller.verify_recovery_account({ email: 'v@example.com' } as EmailDto);
+      await controller.verify_recovery_account({
+        email: 'v@example.com',
+      } as EmailDto);
       const otp = (mailMock.sendotp as jest.Mock).mock.calls[0][0];
 
       const result = await controller.validate_recovery_account({
@@ -350,8 +378,12 @@ describe('AuthController (integration)', () => {
       } as RecoverDto);
 
       expect(result.id).toBeDefined();
-      const userAfter = await usersService.find_user_by_email('recoverfinal@example.com');
-      expect(bcrypt.compareSync('newpass456', userAfter.password!)).toBe(true);
+      const userAfter = await usersService.find_user_by_email(
+        'recoverfinal@example.com',
+      );
+      expect(bcrypt.compareSync('newpass456', userAfter.password!)).toBe(
+        true,
+      );
     });
 
     it('propagates error when new password same as old', async () => {
@@ -359,7 +391,9 @@ describe('AuthController (integration)', () => {
         email: 'same@example.com',
         password: 'samepass',
       });
-      await controller.verify_recovery_account({ email: 'same@example.com' } as EmailDto);
+      await controller.verify_recovery_account({
+        email: 'same@example.com',
+      } as EmailDto);
       const otp = (mailMock.sendotp as jest.Mock).mock.calls[0][0];
 
       await expect(

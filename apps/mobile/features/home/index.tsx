@@ -1,16 +1,30 @@
-import { ThemedSafeArea } from "@/components/themed";
+import { AppSafeArea } from "@/components/themed";
 import { StyleSheet, View } from "react-native";
+import { Title } from "./title";
+import { Info } from "./info";
+import { Clocks } from "./clocks";
 
 export const Home = () => {
   return (
-    <ThemedSafeArea>
-      <View style={styles.box}></View>
-    </ThemedSafeArea>
+    <AppSafeArea style={{ borderWidth: 0 }}>
+      <View style={styles.box}>
+        <Title />
+        <View style={styles.body}>
+          <Info />
+          <Clocks />
+        </View>
+      </View>
+    </AppSafeArea>
   );
 };
 
 const styles = StyleSheet.create({
   box: {
     flex: 1,
+    gap: 10,
+  },
+  body: {
+    flex: 1,
+    borderColor: "red",
   },
 });

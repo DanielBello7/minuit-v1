@@ -80,6 +80,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "transparent",
+    position: "absolute",
+    bottom: 0,
+    elevation: 0,
+    width: "100%",
   },
   box: {
     flexDirection: "row",
