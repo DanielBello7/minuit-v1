@@ -1,4 +1,4 @@
-import { get_timezone_timedate } from "./get-timezone-timedate";
+import { get_tz_date } from "./get-tz-date";
 
 export const get_day_status = (
   targetTimezone: string,
@@ -6,8 +6,8 @@ export const get_day_status = (
 ) => {
   const now = new Date();
 
-  const local = get_timezone_timedate(localTimezone, now);
-  const target = get_timezone_timedate(targetTimezone, now);
+  const local = get_tz_date(localTimezone, now);
+  const target = get_tz_date(targetTimezone, now);
 
   const local_date = new Date(local.year, local.month - 1, local.day);
   const target_date = new Date(target.year, target.month - 1, target.day);

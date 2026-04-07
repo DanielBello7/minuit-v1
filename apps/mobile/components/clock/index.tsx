@@ -1,21 +1,22 @@
-import { AppTouchable, InterText, ThemedView } from "@/components/themed";
+import { AppTouchable, InterText } from "@/components/themed";
 import { StyleSheet, View } from "react-native";
 import { AnalogClockV1 } from "./analog-clock/v1/index.v1";
 import { DigitalClock } from "./digital-clock";
 import { COLORS } from "@/constants/themes/colors";
 import { useLogic } from "./use-logic";
+import { TIME_TYPE } from "@/features/home/clocks";
 
 export type CLOCK_SIZE_TYPE = "SMALL" | "MEDIUM" | "LARGE";
 export type CLOCK_TYPE = "DIGITAL" | "ANALOG";
+export type TIME_CHANGE_TYPE = (val: TIME_TYPE | null) => void;
 
 type Props = {
   size?: CLOCK_SIZE_TYPE;
   type?: CLOCK_TYPE;
-  hr: number;
-  mn: number;
+  custom?: TIME_TYPE | null;
+  date?: Date | null;
   timezone?: string;
   city?: string;
-  date?: Date;
   seconds?: boolean;
   showCity?: boolean;
   interactive?: boolean;
@@ -23,97 +24,102 @@ type Props = {
   showDate?: boolean;
   showHowTo?: boolean;
   showDay?: boolean;
-  onTimeChange?: (hours: number, minutes: number) => void;
+  onTimeChange?: TIME_CHANGE_TYPE;
 };
 
 export const Clock = (props: Props) => {
   const {
     size = "LARGE",
-    showDay = true,
+    showDay = false,
     interactive = false,
     showCity = true,
     seconds = true,
-    showDate = true,
+    showDate = false,
     type = "ANALOG",
-    showHowTo = true,
+    showHowTo = false,
+    reset: rst = false,
   } = props;
 
   const {
     border,
+    clock_face_border,
     card,
     foreground,
     formatted_date,
     muted,
     primary,
     status,
+    reset,
+    custom,
+    now,
+    zoned_now,
+    setCustom,
   } = useLogic(props);
 
+  const hr = custom ? custom.hr : zoned_now.hr;
+  const mn = custom ? custom.mn : zoned_now.mn;
+
   return (
-    <ThemedView
+    <View
       style={[
         styles.wrapper,
         size === "LARGE" ? styles.gapLarge : styles.gapSmall,
       ]}
     >
-      {/* Header */}
       <View style={styles.segment}>
-        {/* City */}
         {showCity && (
           <View style={styles.info}>
-            <InterText style={styles.city}>
+            <InterText
+              style={styles.city}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {props.city ?? "Local time"}
             </InterText>
           </View>
         )}
 
-        {/* Day */}
         {showDay && (
           <View style={styles.info}>
             {!!formatted_date && (
-              <InterText style={[styles.day, { color: muted }]}>
-                {status}
-              </InterText>
+              <InterText style={styles.day}>{status}</InterText>
             )}
           </View>
         )}
       </View>
 
-      {/* Clock */}
-      <View style={styles.segment}>
-        {/* Analog */}
+      <View style={[styles.segment, styles.top]}>
         {type === "ANALOG" && (
           <AnalogClockV1
-            border={border}
+            faceBorder={clock_face_border}
             card={card}
             foreground={foreground}
             primary={primary}
             size={size}
-            hr={props.hr}
-            mn={props.mn}
-            date={props.date ?? new Date()}
+            hr={hr}
+            mn={mn}
+            date={now}
             interactive={interactive}
             seconds={seconds}
             onTimeChange={props.onTimeChange}
+            setCustom={setCustom}
           />
         )}
 
-        {/* Digital */}
-        {props.type === "DIGITAL" && (
+        {type === "DIGITAL" && (
           <DigitalClock
             border={border}
             card={card}
             foreground={foreground}
             primary={primary}
             size={size}
-            hr={props.hr}
-            mn={props.mn}
+            hr={hr}
+            mn={mn}
           />
         )}
       </View>
 
-      {/* Footer */}
       <View style={styles.segment}>
-        {/* Date */}
         {showDate && (
           <View style={styles.info}>
             {!!formatted_date && (
@@ -124,7 +130,6 @@ export const Clock = (props: Props) => {
           </View>
         )}
 
-        {/* How to */}
         {showHowTo && (
           <View style={styles.info}>
             <InterText style={styles.howto}>
@@ -134,24 +139,23 @@ export const Clock = (props: Props) => {
         )}
       </View>
 
-      {/* Reset Button */}
-      {props.reset && (
-        <AppTouchable onPress={() => {}}>
+      {rst && (
+        <AppTouchable onPress={reset}>
           <InterText style={styles.reset}>Reset</InterText>
         </AppTouchable>
       )}
-    </ThemedView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   howto: {
     fontSize: 10,
+    color: COLORS.GRAY_350,
   },
   wrapper: {
     alignItems: "center",
     justifyContent: "center",
-    alignSelf: "flex-start",
   },
   gapLarge: {
     gap: 12,
@@ -163,13 +167,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   city: {
-    fontSize: 20,
-    color: COLORS.PINK,
+    fontSize: 12,
+    textAlign: "center",
+    color: COLORS.GRAY_400,
+    letterSpacing: 1,
+    fontWeight: "600",
+    textTransform: "uppercase",
   },
   day: {
-    fontSize: 12,
-    textTransform: "uppercase",
+    fontSize: 10,
+    textTransform: "capitalize",
     letterSpacing: 0.8,
+    color: COLORS.PINK,
   },
   reset: {
     color: COLORS.PINK,
@@ -179,6 +188,9 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
+    gap: 6,
+  },
+  top: {
+    marginTop: 5,
   },
 });

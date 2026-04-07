@@ -6,7 +6,12 @@ import { Clocks } from "./clocks";
 
 export const Home = () => {
   return (
-    <AppSafeArea style={{ borderWidth: 0 }}>
+    <AppSafeArea
+      style={{
+        flex: 1,
+        paddingHorizontal: 0,
+      }}
+    >
       <View style={styles.box}>
         <Title />
         <View style={styles.body}>

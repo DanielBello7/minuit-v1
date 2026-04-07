@@ -1,6 +1,6 @@
 /** This version uses Gesture.Rotation() */
 import { Canvas, Circle, Line, Shadow } from "@shopify/react-native-skia";
-import { CLOCK_SIZE_TYPE } from "../..";
+import { CLOCK_SIZE_TYPE, TIME_CHANGE_TYPE } from "../..";
 import { InterText, ThemedView } from "@/components/themed";
 import { Platform, StyleSheet, View } from "react-native";
 import { COLORS } from "@/constants/themes/colors";
@@ -14,26 +14,49 @@ type Props = {
   hr: number; // hours
   interactive: boolean;
   card: string;
-  border: string;
+  faceBorder: string;
   foreground: string;
   primary: string;
+  setCustom: TIME_CHANGE_TYPE;
   seconds?: boolean;
-  onTimeChange?: (hours: number, minutes: number) => void;
+  onTimeChange?: TIME_CHANGE_TYPE;
+};
+
+const size_style = (val: CLOCK_SIZE_TYPE) => {
+  switch (val) {
+    case "LARGE":
+      return { fontSize: 30 };
+    case "MEDIUM":
+      return { fontSize: 20 };
+    case "SMALL":
+      return { fontSize: 15 };
+    default:
+      return { fontSize: 10 };
+  }
 };
 
 export const AnalogClockV1 = (props: Props) => {
   const logic = useLogicV1(props);
-  const scale = {
-    height: logic.dimensions.face_s,
-    width: logic.dimensions.face_s,
-  };
 
   return (
     <View style={styles.main}>
-      <ThemedView style={[styles.face, scale]}>
+      <ThemedView
+        style={[
+          styles.face,
+          {
+            width: logic.dimensions.face_s,
+            height: logic.dimensions.face_s,
+          },
+        ]}
+      >
         {/* the whole canvas drawable */}
         <GestureDetector gesture={logic.gesture}>
-          <Canvas style={scale}>
+          <Canvas
+            style={{
+              width: logic.dimensions.face_s,
+              height: logic.dimensions.face_s,
+            }}
+          >
             {/* the circle for the shadow on the outer circle */}
             <Circle
               cx={logic.dimensions.center}
@@ -41,12 +64,18 @@ export const AnalogClockV1 = (props: Props) => {
               r={logic.dimensions.radius}
               color={props.card}
             >
-              {/* the actual shadow for the circle */}
+              {/* ~Tailwind drop-shadow-xl: layered soft shadows */}
               <Shadow
                 dx={0}
-                dy={2}
-                blur={4}
-                color="rgba(0,0,0,0.10)"
+                dy={8}
+                blur={10}
+                color="rgba(0, 0, 0, 0.08)"
+              />
+              <Shadow
+                dx={0}
+                dy={20}
+                blur={250}
+                color="rgba(0, 0, 0, 0.15)"
               />
             </Circle>
 
@@ -55,9 +84,9 @@ export const AnalogClockV1 = (props: Props) => {
               cx={logic.dimensions.center}
               cy={logic.dimensions.center}
               r={logic.dimensions.radius}
-              color={props.border}
+              color={props.faceBorder}
               style="stroke"
-              strokeWidth={1}
+              strokeWidth={props.size === "LARGE" ? 2 : 1}
             />
 
             {/* the pointers on the clock */}
@@ -98,7 +127,7 @@ export const AnalogClockV1 = (props: Props) => {
             />
 
             {/* second hand */}
-            {props.size === "LARGE" && props.seconds && (
+            {props.seconds && (
               <Line
                 p1={{
                   x: logic.dimensions.center,
@@ -121,29 +150,32 @@ export const AnalogClockV1 = (props: Props) => {
           </Canvas>
         </GestureDetector>
       </ThemedView>
+      {/* Digital */}
       <View style={styles.box}>
         <View style={styles.time}>
           <InterText
             type="title"
-            style={styles.text}
+            style={[styles.text, size_style(props.size)]}
           >
             {logic.time.display_hr}
           </InterText>
           <InterText
             type="title"
-            style={styles.text}
+            style={[styles.text, size_style(props.size)]}
           >
             :
           </InterText>
           <InterText
             type="title"
-            style={styles.text}
+            style={[styles.text, size_style(props.size)]}
           >
             {logic.time.display_mn}
           </InterText>
           <InterText
-            type="title"
-            style={styles.period}
+            style={[
+              styles.period,
+              props.size === "SMALL" && { fontSize: 8 },
+            ]}
           >
             {logic.time.display_period}
           </InterText>
@@ -158,7 +190,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     fontSize: 12,
     marginLeft: 3,
-    lineHeight: 14,
     color: COLORS.GRAY_400,
   },
   text: {
@@ -169,7 +200,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   main: {
-    gap: 6,
+    gap: 9,
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
@@ -179,6 +210,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 2,
+    marginLeft: 16,
   },
   face: {
     borderRadius: 999,
