@@ -54,18 +54,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   input: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "800",
-    fontFamily: "InterRegular",
+    fontFamily: "InterBold",
     paddingVertical: 10,
     textAlign: "center",
     letterSpacing: 12,
   },
   focusBorder: {
     ...StyleSheet.absoluteFillObject,
-    borderWidth: 1,
+    borderWidth: 3,
     borderColor: COLORS.PINK,
-    borderRadius: 20,
+    borderRadius: 15,
   },
   loading: {
     opacity: 0.4,

@@ -1,18 +1,22 @@
 import { InterText } from "@/components/themed";
 import { StyleSheet, View } from "react-native";
-import { CLOCK_SIZE_TYPE } from "..";
+import { CLOCK_SIZE } from "..";
+// import { useThemeColor } from "@/hooks/use-theme-color";
 
 type Props = {
-  size: CLOCK_SIZE_TYPE;
+  size: CLOCK_SIZE;
   hr: number; // hours
   mn: number; // mins
-  border: string;
-  foreground: string;
-  primary: string;
-  card: string;
 };
 
 export const DigitalClock = (props: Props) => {
+  // const border = useThemeColor("BORDER_DARKER");
+  // const clock_face_border = useThemeColor("CLOCK_FACE_BORDER");
+  // const muted = useThemeColor("MUTED_FOREGROUND");
+  // const primary = useThemeColor("PRIMARY");
+  // const card = useThemeColor("BACKGROUND");
+  // const foreground = useThemeColor("FOREGROUND");
+
   return (
     <View style={styles.box}>
       <InterText

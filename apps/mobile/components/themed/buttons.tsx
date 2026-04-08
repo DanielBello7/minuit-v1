@@ -38,7 +38,7 @@ export const ButtonA = ({ style, isLoading, ...rest }: AppButtonProps) => {
         >
           <MaterialCommunityIcons
             name="loading"
-            size={24}
+            size={18}
             color={scheme === "light" ? "black" : "white"}
           />
         </Animatable.View>
@@ -85,7 +85,7 @@ export const ButtonB = ({ style, isLoading, ...rest }: AppButtonProps) => {
         >
           <MaterialCommunityIcons
             name="loading"
-            size={24}
+            size={18}
             color={scheme === "light" ? "black" : "white"}
           />
         </Animatable.View>
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   button: {
-    borderRadius: 20,
+    borderRadius: 16,
     paddingVertical: 14,
     flexDirection: "row",
     gap: 10,

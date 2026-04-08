@@ -1,51 +1,26 @@
 import { useSharedValue } from "react-native-reanimated";
 import { Gesture } from "react-native-gesture-handler";
 import { useCallback, useMemo } from "react";
-import { CLOCK_SIZE_TYPE, TIME_CHANGE_TYPE } from "../..";
+import { CLOCK_SIZE, CLOCK_SYNC } from "..";
+import {
+  coordinates,
+  normalize_delta_angle,
+  size,
+  wrap_24,
+} from "./helpers";
 
 type HAND_TYPE = "HOUR" | "MINUTE";
 
 type Props = {
-  size: CLOCK_SIZE_TYPE;
+  interactive: boolean;
+  change: CLOCK_SYNC;
+  size: CLOCK_SIZE;
   date: Date;
   mn: number;
   hr: number;
-  interactive: boolean;
-  setCustom: TIME_CHANGE_TYPE;
-  onTimeChange?: TIME_CHANGE_TYPE;
 };
 
-const to_radians = (deg: number) => (deg * Math.PI) / 180;
-
-const size = (clock_size: CLOCK_SIZE_TYPE) => {
-  switch (clock_size) {
-    case "LARGE":
-      return 240;
-    case "MEDIUM":
-      return 170;
-    case "SMALL":
-      return 90;
-    default:
-      return 100;
-  }
-};
-
-const coordinates = (angle: number, radius: number, center: number) => ({
-  x: center + radius * Math.cos(to_radians(angle - 90)),
-  y: center + radius * Math.sin(to_radians(angle - 90)),
-});
-
-const wrap_24 = (value: number) => {
-  return ((value % 24) + 24) % 24;
-};
-
-const normalize_delta_angle = (delta: number) => {
-  if (delta > 180) return delta - 360;
-  if (delta < -180) return delta + 360;
-  return delta;
-};
-
-export const useLogicV1 = (props: Props) => {
+export const useLogic = (props: Props) => {
   const hand = useSharedValue<HAND_TYPE | null>(null);
 
   const drag_start_total_minutes = useSharedValue(0);
@@ -63,7 +38,7 @@ export const useLogicV1 = (props: Props) => {
 
   const mAngle = props.mn * 6;
   const hAngle = (props.hr % 12) * 30 + props.mn * 0.5;
-  const sAngle = props.date ? props.date.getSeconds() * 6 : 0;
+  const sAngle = props.date.getSeconds() * 6;
 
   const hHandLength = face_s * 0.25;
   const mHandLength = face_s * 0.35;
@@ -112,10 +87,9 @@ export const useLogicV1 = (props: Props) => {
     if (emitted_hour.value === hours && emitted_minute.value === minutes) {
       return;
     }
-
     emitted_hour.value = hours;
     emitted_minute.value = minutes;
-    props.setCustom({ hr: hours, mn: minutes });
+    props.change({ hr: hours, mn: minutes });
   };
 
   const gesture = Gesture.Pan()
@@ -179,30 +153,18 @@ export const useLogicV1 = (props: Props) => {
     })
     .runOnJS(true);
 
-  // time
-  const display_hr_12 = props.hr % 12 === 0 ? 12 : props.hr % 12;
-  const display_mn = String(props.mn).padStart(2, "0");
-  const display_hr = String(display_hr_12).padStart(2, "0");
-  const display_period = props.hr >= 12 ? "PM" : "AM";
-
   return {
     markers,
     gesture,
-    dimensions: {
+    d: {
       face_s,
       center,
       radius,
     },
-    points: {
+    p: {
       hEnd,
       mEnd,
       sEnd,
-    },
-    time: {
-      display_hr_12,
-      display_mn,
-      display_hr,
-      display_period,
     },
   };
 };

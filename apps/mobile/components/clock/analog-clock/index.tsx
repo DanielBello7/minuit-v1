@@ -1,68 +1,53 @@
 /** This version uses Gesture.Rotation() */
 import { Canvas, Circle, Line, Shadow } from "@shopify/react-native-skia";
-import { CLOCK_SIZE_TYPE, TIME_CHANGE_TYPE } from "../..";
-import { InterText, ThemedView } from "@/components/themed";
+import { CLOCK_SIZE, CLOCK_SYNC } from "../.";
+import { ThemedView } from "@/components/themed";
 import { Platform, StyleSheet, View } from "react-native";
 import { COLORS } from "@/constants/themes/colors";
-import { useLogicV1 } from "./use-logic.v1";
+import { useLogic } from "./use-logic";
 import { GestureDetector } from "react-native-gesture-handler";
+import { Digital } from "./digital";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 type Props = {
-  size: CLOCK_SIZE_TYPE;
-  date: Date;
   mn: number; // minutes
   hr: number; // hours
+  date: Date;
+  change: CLOCK_SYNC;
+  size: CLOCK_SIZE;
   interactive: boolean;
-  card: string;
-  faceBorder: string;
-  foreground: string;
-  primary: string;
-  setCustom: TIME_CHANGE_TYPE;
   seconds?: boolean;
-  onTimeChange?: TIME_CHANGE_TYPE;
 };
 
-const size_style = (val: CLOCK_SIZE_TYPE) => {
-  switch (val) {
-    case "LARGE":
-      return { fontSize: 30 };
-    case "MEDIUM":
-      return { fontSize: 20 };
-    case "SMALL":
-      return { fontSize: 15 };
-    default:
-      return { fontSize: 10 };
-  }
-};
-
-export const AnalogClockV1 = (props: Props) => {
-  const logic = useLogicV1(props);
+export const AnalogClock = (props: Props) => {
+  const border = useThemeColor("CLOCK_FACE_BORDER");
+  const foreground = useThemeColor("FOREGROUND");
+  const primary = useThemeColor("PRIMARY");
+  const card = useThemeColor("BACKGROUND");
+  const logic = useLogic(props);
 
   return (
     <View style={styles.main}>
       <ThemedView
         style={[
           styles.face,
-          {
-            width: logic.dimensions.face_s,
-            height: logic.dimensions.face_s,
-          },
+          { width: logic.d.face_s, height: logic.d.face_s },
         ]}
       >
         {/* the whole canvas drawable */}
         <GestureDetector gesture={logic.gesture}>
           <Canvas
             style={{
-              width: logic.dimensions.face_s,
-              height: logic.dimensions.face_s,
+              width: logic.d.face_s,
+              height: logic.d.face_s,
             }}
           >
             {/* the circle for the shadow on the outer circle */}
             <Circle
-              cx={logic.dimensions.center}
-              cy={logic.dimensions.center}
-              r={logic.dimensions.radius}
-              color={props.card}
+              cx={logic.d.center}
+              cy={logic.d.center}
+              r={logic.d.radius}
+              color={card}
             >
               {/* ~Tailwind drop-shadow-xl: layered soft shadows */}
               <Shadow
@@ -81,10 +66,10 @@ export const AnalogClockV1 = (props: Props) => {
 
             {/* the outer circle itself */}
             <Circle
-              cx={logic.dimensions.center}
-              cy={logic.dimensions.center}
-              r={logic.dimensions.radius}
-              color={props.faceBorder}
+              cx={logic.d.center}
+              cy={logic.d.center}
+              r={logic.d.radius}
+              color={border}
               style="stroke"
               strokeWidth={props.size === "LARGE" ? 2 : 1}
             />
@@ -95,7 +80,7 @@ export const AnalogClockV1 = (props: Props) => {
                 key={marker.key}
                 p1={marker.start}
                 p2={marker.end}
-                color={props.foreground}
+                color={foreground}
                 strokeWidth={marker.strokeWidth}
                 opacity={marker.opacity}
                 strokeCap="round"
@@ -105,11 +90,11 @@ export const AnalogClockV1 = (props: Props) => {
             {/* hour hand */}
             <Line
               p1={{
-                x: logic.dimensions.center,
-                y: logic.dimensions.center,
+                x: logic.d.center,
+                y: logic.d.center,
               }}
-              p2={logic.points.hEnd}
-              color={props.foreground}
+              p2={logic.p.hEnd}
+              color={foreground}
               strokeWidth={props.size === "LARGE" ? 6 : 3}
               strokeCap="round"
             />
@@ -117,11 +102,11 @@ export const AnalogClockV1 = (props: Props) => {
             {/* minute hand */}
             <Line
               p1={{
-                x: logic.dimensions.center,
-                y: logic.dimensions.center,
+                x: logic.d.center,
+                y: logic.d.center,
               }}
-              p2={logic.points.mEnd}
-              color={props.foreground}
+              p2={logic.p.mEnd}
+              color={foreground}
               strokeWidth={props.size === "LARGE" ? 4 : 2}
               strokeCap="round"
             />
@@ -130,11 +115,11 @@ export const AnalogClockV1 = (props: Props) => {
             {props.seconds && (
               <Line
                 p1={{
-                  x: logic.dimensions.center,
-                  y: logic.dimensions.center,
+                  x: logic.d.center,
+                  y: logic.d.center,
                 }}
-                p2={logic.points.sEnd}
-                color={props.primary}
+                p2={logic.p.sEnd}
+                color={primary}
                 strokeWidth={2}
                 strokeCap="round"
               />
@@ -142,45 +127,21 @@ export const AnalogClockV1 = (props: Props) => {
 
             {/* center dot on the clock */}
             <Circle
-              cx={logic.dimensions.center}
-              cy={logic.dimensions.center}
+              cx={logic.d.center}
+              cy={logic.d.center}
               r={props.size === "LARGE" ? 4 : 2}
-              color={props.primary}
+              color={primary}
             />
           </Canvas>
         </GestureDetector>
       </ThemedView>
+
       {/* Digital */}
-      <View style={styles.box}>
-        <View style={styles.time}>
-          <InterText
-            type="title"
-            style={[styles.text, size_style(props.size)]}
-          >
-            {logic.time.display_hr}
-          </InterText>
-          <InterText
-            type="title"
-            style={[styles.text, size_style(props.size)]}
-          >
-            :
-          </InterText>
-          <InterText
-            type="title"
-            style={[styles.text, size_style(props.size)]}
-          >
-            {logic.time.display_mn}
-          </InterText>
-          <InterText
-            style={[
-              styles.period,
-              props.size === "SMALL" && { fontSize: 8 },
-            ]}
-          >
-            {logic.time.display_period}
-          </InterText>
-        </View>
-      </View>
+      <Digital
+        hr={props.hr}
+        mn={props.mn}
+        size={props.size}
+      />
     </View>
   );
 };

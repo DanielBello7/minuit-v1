@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { Clock } from "@/components/clock";
 import { ThemedView } from "@/components/themed";
@@ -6,15 +6,17 @@ import { FlatList } from "react-native-gesture-handler";
 import { COLORS } from "@/constants/themes/colors";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { CloseBtn } from "@/components/close";
-import { get_tz_time } from "@/libs/get-tz-time";
+import { Zoned } from "@/libs/zoned";
+import { Refresh } from "./refresh";
 
 export type TIME_TYPE = { hr: number; mn: number };
 
 export const Clocks = () => {
-  const [current, setCurrent] = useState(new Date());
-  const [custom, setCustom] = useState<Date | null>(null);
+  const [synced, setSynced] = useState<Zoned | null>(null);
+  const [custom, setCustom] = useState<TIME_TYPE | null>(null);
 
   const br = useThemeColor("SIDEBAR_BORDER");
+  const home_tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const clock_bg_style = [
     styles.my_clock,
@@ -22,8 +24,10 @@ export const Clocks = () => {
     styles.shadow,
   ];
 
-  const home_tz = "America/Indiana/Indianapolis";
-  const display_date = custom ?? current;
+  const refresh = () => {
+    setSynced(null);
+    setCustom(null);
+  };
 
   const timezones = [
     { tz: "America/New_York", city: "New York" },
@@ -31,38 +35,6 @@ export const Clocks = () => {
     { tz: "America/Toronto", city: "Toronto" },
     { tz: "America/Vancouver", city: "Vancouver" },
   ];
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (!custom) {
-        setCurrent(new Date());
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(id);
-    };
-  }, [custom]);
-
-  const handleTimeChange = (val: TIME_TYPE | null) => {
-    if (!val) {
-      setCustom(null);
-      return;
-    }
-
-    const base = display_date;
-
-    const currentHome = get_tz_time(base, home_tz);
-
-    const hourDiff = val.hr - currentHome.hr;
-    const minuteDiff = val.mn - currentHome.mn;
-
-    const adjusted = new Date(base);
-    adjusted.setHours(adjusted.getHours() + hourDiff);
-    adjusted.setMinutes(adjusted.getMinutes() + minuteDiff);
-
-    setCustom(adjusted);
-  };
 
   return (
     <View style={styles.container}>
@@ -81,15 +53,13 @@ export const Clocks = () => {
               </View>
 
               <Clock
-                date={display_date}
-                interactive={false}
                 city={i.item.city}
-                type="ANALOG"
+                tz={i.item.tz}
                 size="SMALL"
-                seconds={false}
-                timezone={i.item.tz}
-                showDay={true}
+                sync={synced}
+                type="ANALOG"
                 showDate={true}
+                dateType="short"
               />
             </ThemedView>
           )}
@@ -98,17 +68,21 @@ export const Clocks = () => {
 
       <View style={styles.section_2}>
         <ThemedView style={[clock_bg_style, { width: "100%" }]}>
+          {custom && <Refresh action={refresh} />}
           <Clock
-            date={display_date}
-            interactive={true}
-            type="ANALOG"
-            city="INDIANAPOLIS"
-            timezone={home_tz}
+            city="indianapolis"
             size="LARGE"
-            showHowTo={true}
+            type="ANALOG"
+            tz={home_tz}
+            set={setSynced}
+            custom={custom}
+            setCustom={setCustom}
+            dateType="long"
             showDate={true}
-            reset={true}
-            onTimeChange={handleTimeChange}
+            showSeconds={true}
+            showDays={false}
+            showHowTo={true}
+            interactive={true}
           />
         </ThemedView>
       </View>
@@ -146,7 +120,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 20,
-    paddingVertical: 20,
+    paddingVertical: 30,
   },
   section_1: {
     width: "100%",
@@ -172,9 +146,7 @@ const styles = StyleSheet.create({
     right: 10,
   },
   list_clock: {
-    paddingVertical: 30,
     width: 140,
     gap: 5,
-    paddingTop: 40,
   },
 });
