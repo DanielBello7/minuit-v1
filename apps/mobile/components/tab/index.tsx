@@ -16,12 +16,13 @@ export const CustomTabBar = ({
 }: BottomTabBarProps) => {
   const bg = useThemeColor("TAB_BAR_BACKGROUND");
   const fg = useThemeColor("TAB_BAR_FOREGROUND");
+  const bd = useThemeColor("BUTTON_SECONDARY_BORDER");
   return (
     <SafeAreaView
       style={styles.container}
       edges={edges}
     >
-      <View style={[styles.box, { backgroundColor: bg }]}>
+      <View style={[styles.box, { backgroundColor: bg, borderColor: bd }]}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -90,6 +91,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     gap: 10,
     padding: 6,
+    borderWidth: 1,
   },
   tab: {
     alignItems: "center",

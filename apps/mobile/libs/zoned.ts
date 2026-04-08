@@ -39,6 +39,15 @@ export class Zoned {
     return this.base.toFormat("cccc, LLLL d");
   }
 
+  get period() {
+    const hour = this.base.hour;
+
+    if (hour < 12) return "morning";
+    if (hour < 17) return "afternoon";
+    if (hour < 21) return "evening";
+    return "night";
+  }
+
   public parts = () => {
     return {
       time_24: this.base.toFormat("HH:mm"),

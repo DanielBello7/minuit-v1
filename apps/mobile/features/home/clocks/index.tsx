@@ -15,6 +15,7 @@ export const Clocks = () => {
   const [synced, setSynced] = useState<Zoned | null>(null);
   const [custom, setCustom] = useState<TIME_TYPE | null>(null);
 
+  const bg = useThemeColor("CARD");
   const br = useThemeColor("SIDEBAR_BORDER");
   const home_tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -47,7 +48,13 @@ export const Clocks = () => {
           horizontal={true}
           keyExtractor={(i) => i.city}
           renderItem={(i) => (
-            <ThemedView style={[clock_bg_style, styles.list_clock]}>
+            <ThemedView
+              style={[
+                clock_bg_style,
+                styles.list_clock,
+                { backgroundColor: bg },
+              ]}
+            >
               <View style={styles.close}>
                 <CloseBtn size={15} />
               </View>
@@ -67,7 +74,9 @@ export const Clocks = () => {
       </View>
 
       <View style={styles.section_2}>
-        <ThemedView style={[clock_bg_style, { width: "100%" }]}>
+        <ThemedView
+          style={[clock_bg_style, { width: "100%", backgroundColor: bg }]}
+        >
           {custom && <Refresh action={refresh} />}
           <Clock
             city="indianapolis"

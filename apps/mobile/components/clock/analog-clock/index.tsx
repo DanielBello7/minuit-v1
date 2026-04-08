@@ -23,7 +23,8 @@ export const AnalogClock = (props: Props) => {
   const border = useThemeColor("CLOCK_FACE_BORDER");
   const foreground = useThemeColor("FOREGROUND");
   const primary = useThemeColor("PRIMARY");
-  const card = useThemeColor("BACKGROUND");
+  const bg = useThemeColor("BACKGROUND");
+  const card = useThemeColor("CARD");
   const logic = useLogic(props);
 
   return (
@@ -31,7 +32,11 @@ export const AnalogClock = (props: Props) => {
       <ThemedView
         style={[
           styles.face,
-          { width: logic.d.face_s, height: logic.d.face_s },
+          {
+            width: logic.d.face_s,
+            height: logic.d.face_s,
+            backgroundColor: card,
+          },
         ]}
       >
         {/* the whole canvas drawable */}

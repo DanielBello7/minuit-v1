@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { FONTS_OBJ } from "@/constants/assets/fonts";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SonnerBox } from "@/components/sonner";
+import { useRootStore } from "@/stores";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import "react-native-reanimated";
@@ -29,7 +30,9 @@ SplashScreen.preventAutoHideAsync();
 
 const RootLayout = () => {
   const navigation = useNavigation();
-  const colors = useColorScheme();
+  const scheme = useColorScheme() ?? "light";
+  const store = useRootStore((state) => state.data);
+  const theme = store.theme === "system" ? scheme : store.mode;
   const [loaded, error] = useFonts({
     ...FONTS_OBJ,
     ...FontAwesome.font,
@@ -66,7 +69,7 @@ const RootLayout = () => {
       <SafeAreaProvider>
         <QueryClientProvider client={client}>
           <ThemeProvider
-            value={colors === "dark" ? DarkTheme : DefaultTheme}
+            value={theme === "dark" ? DarkTheme : DefaultTheme}
           >
             <View style={styles.container}>
               <Stack
@@ -81,7 +84,7 @@ const RootLayout = () => {
             </View>
             <StatusBar
               animated={true}
-              barStyle={Platform.OS === "ios" ? "default" : "dark-content"}
+              barStyle={theme === "dark" ? "light-content" : "dark-content"}
               translucent={true}
               backgroundColor="transparent"
             />

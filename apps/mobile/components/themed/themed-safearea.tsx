@@ -6,7 +6,7 @@ import {
 } from "react-native-safe-area-context";
 
 export const ThemedSafeArea = (props: SafeAreaViewProps) => {
-  const color = useThemeColor("MUTED");
+  const color = useThemeColor("BACKGROUND");
   return (
     <SafeAreaView
       {...props}

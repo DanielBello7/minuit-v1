@@ -6,13 +6,17 @@ import { Platform, StyleSheet, View } from "react-native";
 const SIZE = 40;
 const RADIUS = SIZE / 2;
 
-export const DP = () => {
+type Props = {
+  img?: string | null;
+};
+export const DP = (props: Props) => {
   return (
     <View style={styles.shadow}>
       <View style={styles.circle}>
         <Image
-          source={AVATARS.avatar_01}
+          source={props.img}
           style={styles.img}
+          placeholder={AVATARS.avatar_01}
           contentFit="cover"
         />
       </View>
@@ -55,5 +59,6 @@ const styles = StyleSheet.create({
   img: {
     width: "100%",
     height: "100%",
+    borderRadius: 999,
   },
 });
