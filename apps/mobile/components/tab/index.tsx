@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "transparent",
     position: "absolute",
-    bottom: 0,
+    bottom: -14,
     elevation: 0,
     width: "100%",
   },

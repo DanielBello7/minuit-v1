@@ -1,4 +1,5 @@
 export type APP_COLORS = {
+  BASE: string;
   TEXT: string;
   BACKGROUND: string;
   TAB_BAR_BACKGROUND: string;
@@ -130,6 +131,7 @@ export const COLORS = {
 };
 
 export const LIGHT_THEME_COLORS: APP_COLORS = {
+  BASE: WHITE,
   TEXT: BLACK,
   BACKGROUND: GRAY_50,
   TINT: BLUE,
@@ -188,6 +190,7 @@ export const LIGHT_THEME_COLORS: APP_COLORS = {
 };
 
 export const DARK_THEME_COLORS: APP_COLORS = {
+  BASE: BLACK,
   TEXT: WHITE,
   BACKGROUND: BLACK,
   TAB_BAR_BACKGROUND: CHARCOAL_900,

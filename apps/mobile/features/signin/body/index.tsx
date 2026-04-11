@@ -46,6 +46,7 @@ export const SigninBody = (props: Props) => {
           onChangeText={(e) => {
             logic.form.setValue("email", e);
           }}
+          style={{ letterSpacing: 0 }}
         />
         <ButtonA
           onPress={logic.submit}

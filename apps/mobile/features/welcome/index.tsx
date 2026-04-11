@@ -10,16 +10,18 @@ import {
 import { InterText } from "@/components/themed/styled-text";
 import { useRouter } from "expo-router";
 import Feather from "@expo/vector-icons/Feather";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 const Width = Dimensions.get("screen").width;
 
 export const Welcome = () => {
+  const bg = useThemeColor("BASE");
   const router = useRouter();
   const signin = () => router.replace("/(main)/(auth)/signin.screen");
   const signup = () => router.replace("/(main)/(auth)/signup.screen");
 
   return (
-    <ThemedSafeArea>
+    <ThemedSafeArea style={{ backgroundColor: bg }}>
       <ThemedView style={styles.container}>
         <View style={styles.content}>
           <View style={styles.iconContainer}>
@@ -66,6 +68,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
+    backgroundColor: "transparent",
   },
   content: {
     width: Width > 402 ? 360 : "100%",

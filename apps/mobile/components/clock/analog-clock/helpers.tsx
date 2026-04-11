@@ -9,7 +9,7 @@ export const size = (clock_size: CLOCK_SIZE) => {
     case "MEDIUM":
       return 170;
     case "SMALL":
-      return 90;
+      return 80;
     default:
       return 100;
   }

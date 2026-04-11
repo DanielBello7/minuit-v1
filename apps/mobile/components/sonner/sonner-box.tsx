@@ -19,6 +19,7 @@ export const SonnerBox = () => {
   const { data: state, hide } = useSonnerStore((state) => state);
   const { visible, msg, title, state: type, ref } = state;
   const border = useThemeColor("BORDER");
+  const bg = useThemeColor("BASE");
 
   useEffect(() => {
     let timeout: number | undefined;
@@ -32,7 +33,7 @@ export const SonnerBox = () => {
 
   return (
     <Animatable.View
-      style={styles.container}
+      style={[styles.container]}
       ref={ref}
       delay={50}
       duration={500}
@@ -48,6 +49,7 @@ export const SonnerBox = () => {
               styles.box,
               {
                 borderColor: border,
+                backgroundColor: bg,
               },
             ]}
           >

@@ -20,6 +20,7 @@ export const AppInput = (props: Props) => {
   const border = useThemeColor("BORDER");
   const text = useThemeColor("TEXT");
   const focusOpacity = useRef(new Animated.Value(0)).current;
+
   const fadeTo = (toValue: 0 | 1) => {
     Animated.timing(focusOpacity, {
       toValue,
@@ -27,6 +28,8 @@ export const AppInput = (props: Props) => {
       useNativeDriver: true,
     }).start();
   };
+
+  const { style, ...rest } = props;
 
   return (
     <View style={styles.group}>
@@ -38,6 +41,7 @@ export const AppInput = (props: Props) => {
 
         <TextInput
           style={[
+            style,
             styles.input,
             { color: text },
             props.isLoading && styles.loading,
@@ -52,7 +56,7 @@ export const AppInput = (props: Props) => {
             fadeTo(0);
             props.onBlur?.(event);
           }}
-          {...props}
+          {...rest}
         />
         <Animated.View
           pointerEvents="none"

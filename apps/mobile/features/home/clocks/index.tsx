@@ -8,6 +8,7 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import { CloseBtn } from "@/components/close";
 import { Zoned } from "@/libs/zoned";
 import { Refresh } from "./refresh";
+import { AddNewClock } from "./add";
 
 export type TIME_TYPE = { hr: number; mn: number };
 
@@ -46,6 +47,7 @@ export const Clocks = () => {
           style={styles.flatlist}
           data={timezones}
           horizontal={true}
+          ListFooterComponent={<AddNewClock />}
           keyExtractor={(i) => i.city}
           renderItem={(i) => (
             <ThemedView
@@ -102,16 +104,16 @@ export const Clocks = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 5,
     paddingTop: 10,
+    gap: 10,
   },
   shadow: {
     ...Platform.select({
       ios: {
         shadowColor: COLORS.BLACK,
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 5,
+        shadowOpacity: 0.04,
+        shadowRadius: 2,
       },
       android: {
         elevation: 4,
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
       default: {
         shadowColor: COLORS.BLACK,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.04,
         shadowRadius: 2,
       },
     }),
@@ -128,7 +130,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.4,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 20,
+    borderRadius: 15,
     paddingVertical: 30,
   },
   section_1: {
@@ -136,15 +138,15 @@ const styles = StyleSheet.create({
     flex: 0.35,
   },
   section_2: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     width: "100%",
     flex: 0.65,
     alignItems: "center",
   },
   list: {
-    gap: 15,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    gap: 16,
+    paddingBottom: 5,
+    paddingHorizontal: 16,
   },
   flatlist: {
     width: "100%",
@@ -155,7 +157,7 @@ const styles = StyleSheet.create({
     right: 10,
   },
   list_clock: {
-    width: 140,
+    width: 150,
     gap: 5,
   },
 });
