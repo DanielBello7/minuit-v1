@@ -13,8 +13,10 @@ import { Clock } from "@/components/clock";
 import { User } from "@/libs/user";
 import { Spacer } from "@/components/spacer";
 import { Save } from "./save";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 export const AddAlarms = () => {
+  const color = useThemeColor("MUTED_FOREGROUND");
   const logic = useLogic();
   const users = new User();
   return (
@@ -28,7 +30,7 @@ export const AddAlarms = () => {
         right={<Save action={() => {}} />}
       />
       <View style={styles.flex}>
-        <InterText>
+        <InterText style={{ color }}>
           Lorem ipsum dolor sit amet consectetur adipisicing elit. Sint
           nostrum, cum, magnam quam cupiditate atque
         </InterText>

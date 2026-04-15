@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   box: {
     position: "absolute",
     bottom: 100,
-    right: 10,
+    right: 20,
     alignItems: "center",
     justifyContent: "center",
     width: 50,
