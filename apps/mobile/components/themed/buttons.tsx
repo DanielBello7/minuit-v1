@@ -106,6 +106,45 @@ export const ButtonB = ({ style, isLoading, ...rest }: AppButtonProps) => {
 };
 
 /**
+ * Link-style button: transparent surface, pairs with {@link ButtonTextC}.
+ */
+export const ButtonC = ({ style, isLoading, ...rest }: AppButtonProps) => {
+  const pink = useThemeColor("PRIMARY");
+
+  if (isLoading) {
+    return (
+      <AppTouchable
+        {...rest}
+        disabled={true}
+        style={[styles.link_button, style]}
+      >
+        <Animatable.View
+          animation={"rotate"}
+          iterationCount={"infinite"}
+          useNativeDriver={true}
+        >
+          <MaterialCommunityIcons
+            name="loading"
+            size={18}
+            color={pink}
+          />
+        </Animatable.View>
+      </AppTouchable>
+    );
+  }
+  return (
+    <AppTouchable
+      {...rest}
+      style={[
+        styles.link_button,
+        rest.disabled && styles.link_button_disabled,
+        style,
+      ]}
+    />
+  );
+};
+
+/**
  * Text style helper for primary buttons.
  */
 export const ButtonTextA = (props: ThemedTextProps) => {
@@ -131,6 +170,19 @@ export const ButtonTextB = (props: ThemedTextProps) => {
   );
 };
 
+/**
+ * Text style helper for link (ButtonC) — pink, underlined.
+ */
+export const ButtonTextC = (props: ThemedTextProps) => {
+  const color = useThemeColor("PRIMARY");
+  return (
+    <InterText
+      {...props}
+      style={[styles.link_text, { color }, props.style]}
+    />
+  );
+};
+
 const styles = StyleSheet.create({
   primary_text: {
     fontSize: 15,
@@ -150,5 +202,22 @@ const styles = StyleSheet.create({
   },
   secondary: {
     borderWidth: 1,
+  },
+  link_button: {
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+  },
+  link_button_disabled: {
+    opacity: 0.45,
+  },
+  link_text: {
+    fontSize: 15,
+    fontWeight: "500",
   },
 });

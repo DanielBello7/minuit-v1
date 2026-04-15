@@ -2,6 +2,7 @@ import { InterText } from "@/components/themed";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
+import { ReactNode } from "react";
 import { Retry } from "./retry";
 
 import Feather from "@expo/vector-icons/Feather";
@@ -9,7 +10,7 @@ import Feather from "@expo/vector-icons/Feather";
 type Props = {
   title?: string;
   sub?: string;
-  img?: string;
+  img?: string | ReactNode;
   retry?: () => void;
   retryText?: string;
 };
@@ -18,12 +19,16 @@ export const Empty = (props: Props) => {
   return (
     <View style={styles.box}>
       {props.img ? (
-        <Image
-          style={styles.img}
-          source={props.img}
-          contentFit="cover"
-          contentPosition={"center"}
-        />
+        typeof props.img === "string" ? (
+          <Image
+            style={styles.img}
+            source={props.img}
+            contentFit="cover"
+            contentPosition={"center"}
+          />
+        ) : (
+          props.img
+        )
       ) : (
         <View>
           <Feather
@@ -56,6 +61,8 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
+    gap: 5,
+    marginBottom: 10,
   },
   title: {
     fontSize: 24,
@@ -65,7 +72,7 @@ const styles = StyleSheet.create({
   },
   sub: {
     fontSize: 14,
-    maxWidth: 180,
+    maxWidth: 240,
     textAlign: "center",
   },
   img: {
@@ -74,7 +81,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   box: {
-    gap: 14,
+    gap: 16,
     width: "100%",
     alignItems: "center",
     justifyContent: "center",

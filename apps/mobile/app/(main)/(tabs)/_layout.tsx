@@ -4,18 +4,18 @@ import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Tabs } from "expo-router";
-import { COLOR_THEMES } from "@/constants/themes/colors";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { CustomTabBar } from "@/components/tab";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const tint = useThemeColor("TINT");
 
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: COLOR_THEMES[colorScheme ?? "light"].TINT,
+        lazy: false,
+        tabBarActiveTintColor: tint,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: { position: "absolute" },

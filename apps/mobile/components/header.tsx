@@ -8,6 +8,7 @@ type Props = {
   title: string;
   back?: () => void;
   right?: ReactNode;
+  backType?: "CLOSE" | "BACK";
 };
 export const Header = (props: Props) => {
   const border = useThemeColor("BORDER_DARKER");
@@ -23,11 +24,14 @@ export const Header = (props: Props) => {
       <View style={styles.btn}>
         <Back
           action={props.back}
-          type="close"
+          type={props.backType === "BACK" ? "back" : "close"}
         />
       </View>
       <InterText
-        style={styles.title}
+        style={[
+          styles.title,
+          props.right !== undefined && { paddingLeft: 20 },
+        ]}
         numberOfLines={1}
       >
         {props.title}
@@ -55,7 +59,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     textAlign: "center",
     fontWeight: "600",
-    paddingLeft: 20,
   },
   btn: {
     minWidth: 20,

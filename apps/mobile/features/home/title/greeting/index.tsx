@@ -7,6 +7,7 @@ import { User } from "@/libs/user";
 export const Greeting = () => {
   const zone = new Zoned();
   const user = new User();
+
   return (
     <View style={styles.box}>
       <DP img={user.values?.avatar} />

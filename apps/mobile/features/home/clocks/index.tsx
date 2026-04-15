@@ -9,6 +9,7 @@ import { CloseBtn } from "@/components/close";
 import { Zoned } from "@/libs/zoned";
 import { Refresh } from "./refresh";
 import { AddNewClock } from "./add";
+import { User } from "@/libs/user";
 
 export type TIME_TYPE = { hr: number; mn: number };
 
@@ -18,7 +19,7 @@ export const Clocks = () => {
 
   const bg = useThemeColor("CARD");
   const br = useThemeColor("SIDEBAR_BORDER");
-  const home_tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const user = new User();
 
   const clock_bg_style = [
     styles.my_clock,
@@ -84,7 +85,7 @@ export const Clocks = () => {
             city="indianapolis"
             size="LARGE"
             type="ANALOG"
-            tz={home_tz}
+            tz={user.timezone}
             set={setSynced}
             custom={custom}
             setCustom={setCustom}

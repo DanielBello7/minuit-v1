@@ -1,49 +1,116 @@
 import { InterText } from "@/components/themed";
-import { StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 import { CLOCK_SIZE } from "..";
-// import { useThemeColor } from "@/hooks/use-theme-color";
+import { useLogic } from "./use-logic";
+import { Digit } from "./number";
+
+const DIGIT_HEIGHT = 90;
+const DIGIT_WIDTH = 100;
 
 type Props = {
   size: CLOCK_SIZE;
-  hr: number; // hours
-  mn: number; // mins
+  hr: number;
+  mn: number;
 };
 
 export const DigitalClock = (props: Props) => {
-  // const border = useThemeColor("BORDER_DARKER");
-  // const clock_face_border = useThemeColor("CLOCK_FACE_BORDER");
-  // const muted = useThemeColor("MUTED_FOREGROUND");
-  // const primary = useThemeColor("PRIMARY");
-  // const card = useThemeColor("BACKGROUND");
-  // const foreground = useThemeColor("FOREGROUND");
+  // prettier-ignore
+  const {
+    hr_data,
+    hr_index,
+    hr_ref,
+    mn_data,
+    mn_index,
+    mn_ref
+  } = useLogic(props);
 
   return (
-    <View style={styles.box}>
-      <InterText
-        style={[
-          styles.digital,
-          props.size === "LARGE" ? styles.large : styles.small,
-        ]}
-      >
-        {String(props.hr).padStart(2, "0")}:
-        {String(props.mn).padStart(2, "0")}
-      </InterText>
+    <View style={styles.container}>
+      <View style={styles.dw}>
+        <FlatList
+          ref={hr_ref}
+          initialScrollIndex={hr_index}
+          data={hr_data}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={DIGIT_HEIGHT}
+          decelerationRate="fast"
+          style={styles.digit}
+          contentContainerStyle={styles.inside}
+          keyExtractor={(_, index) => `hr-${index}`}
+          renderItem={(i) => <Digit value={i.item} />}
+          getItemLayout={(_, index) => ({
+            length: DIGIT_HEIGHT,
+            offset: DIGIT_HEIGHT * index,
+            index,
+          })}
+        />
+      </View>
+
+      <InterText style={styles.inter}>:</InterText>
+
+      <View style={styles.dw}>
+        <FlatList
+          ref={mn_ref}
+          initialScrollIndex={mn_index}
+          data={mn_data}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={DIGIT_HEIGHT}
+          decelerationRate="fast"
+          style={styles.digit}
+          contentContainerStyle={styles.inside}
+          keyExtractor={(_, index) => `mn-${index}`}
+          renderItem={(i) => <Digit value={i.item} />}
+          getItemLayout={(_, index) => ({
+            length: DIGIT_HEIGHT,
+            offset: DIGIT_HEIGHT * index,
+            index,
+          })}
+        />
+      </View>
+
+      <View style={styles.dw}>
+        <FlatList
+          data={["AM", "PM"]}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={DIGIT_HEIGHT}
+          decelerationRate="fast"
+          style={styles.digit}
+          contentContainerStyle={styles.inside}
+          keyExtractor={(_, index) => `mn-${index}`}
+          renderItem={(i) => <Digit value={i.item} />}
+          getItemLayout={(_, index) => ({
+            length: DIGIT_HEIGHT,
+            offset: DIGIT_HEIGHT * index,
+            index,
+          })}
+        />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  box: {
+  container: {
+    width: "100%",
+    flexDirection: "row",
     alignItems: "center",
+    gap: 4,
   },
-  digital: {
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
+  inside: {
+    width: "100%",
+    height: "100%",
   },
-  large: {
-    fontSize: 28,
+  dw: {
+    width: DIGIT_WIDTH,
+    height: DIGIT_HEIGHT,
+    borderWidth: 1,
   },
-  small: {
-    fontSize: 14,
+  digit: {
+    width: "100%",
+    height: "100%",
+  },
+  inter: {
+    fontWeight: "900",
+    fontSize: 50,
   },
 });

@@ -1,6 +1,8 @@
+import { AppTouchable } from "@/components/themed";
 import { AVATARS } from "@/constants/assets";
 import { COLORS } from "@/constants/themes/colors";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
 
 const SIZE = 40;
@@ -10,16 +12,25 @@ type Props = {
   img?: string | null;
 };
 export const DP = (props: Props) => {
+  const router = useRouter();
+
+  const press = () => {
+    return router.navigate("/(main)/(tabs)/account");
+  };
+
   return (
     <View style={styles.shadow}>
-      <View style={styles.circle}>
+      <AppTouchable
+        style={styles.circle}
+        onPress={press}
+      >
         <Image
           source={props.img}
           style={styles.img}
           placeholder={AVATARS.avatar_01}
           contentFit="cover"
         />
-      </View>
+      </AppTouchable>
     </View>
   );
 };

@@ -30,6 +30,38 @@ type Props = {
   showDays?: boolean;
 };
 
+/**
+ * Renders a timezone-aware clock card with optional analog or digital display.
+ *
+ * The component can run in two modes:
+ * - standalone: it keeps its own live `Zoned` time based on `tz`
+ * - synced: when `sync` is provided, it mirrors the same instant from another
+ *   clock but displays it in this clock's timezone
+ *
+ * It also supports controlled and uncontrolled custom time:
+ * - uncontrolled: if `custom` is omitted, drag changes are stored internally
+ * - controlled: if `custom` is provided, the parent owns the selected time and
+ *   receives updates through `setCustom`
+ *
+ * @param props.size Visual size preset for spacing and child clock sizing.
+ * @param props.type Whether to render the analog face or digital display.
+ * @param props.sync Optional source clock to mirror. When present, this clock
+ * displays the same instant as the source in its own timezone.
+ * @param props.city Display label shown in the header.
+ * @param props.tz IANA timezone used as the local zone for this clock.
+ * @param props.set Optional callback fired with a `Zoned` instance when the
+ * interactive time changes, or `null` when that custom selection is cleared.
+ * @param props.custom Optional externally controlled custom time selection.
+ * @param props.setCustom Optional callback fired whenever the custom
+ * hour/minute selection changes.
+ * @param props.showSeconds Whether the analog clock should render a second hand.
+ * @param props.showCity Whether to show the city label in the header.
+ * @param props.interactive Whether the analog clock hands can be dragged.
+ * @param props.showDate Whether to show the formatted date in the footer.
+ * @param props.dateType Controls the formatted date style used in the footer.
+ * @param props.showHowTo Whether to show helper copy beneath the clock.
+ * @param props.showDays Whether to show the relative day label in the header.
+ */
 export const Clock = (props: Props) => {
   const {
     size = "LARGE",

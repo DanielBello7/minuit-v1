@@ -1,12 +1,8 @@
-import { cityMapping, CityData } from "city-timezones";
 import { useAsync } from "@/hooks/use-async";
 import { useMemo, useRef, useState } from "react";
 import { SectionList } from "react-native";
 import { useRouter } from "expo-router";
-
-const ab = "a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z".split(
-  ",",
-);
+import { City } from "@/libs/city";
 
 export const useLogic = () => {
   const [current, setCurrent] = useState<string[]>([]);
@@ -14,6 +10,8 @@ export const useLogic = () => {
   const ref = useRef<SectionList | null>(null);
   const handler = useAsync();
   const router = useRouter();
+
+  const results = City.sectioned();
 
   const goback = () => {
     return router.back();
@@ -36,24 +34,6 @@ export const useLogic = () => {
     });
   };
 
-  const results = useMemo(() => {
-    return cityMapping.reduce(
-      (a, b) => {
-        const st = b.city[0]?.toLowerCase() ?? "*";
-        if (ab.includes(st)) {
-          if (a[st]) a[st].push(b);
-          else a[st] = [b];
-          return a;
-        } else {
-          if (a["#"]) a["#"].push(b);
-          else a["#"] = [b];
-          return a;
-        }
-      },
-      {} as Record<string, CityData[]>,
-    );
-  }, []);
-
   const rs = useMemo(() => {
     return Object.keys(results)
       .filter((i) => {
@@ -74,7 +54,7 @@ export const useLogic = () => {
   };
 
   return {
-    list: cityMapping,
+    list: City.list,
     results,
     rs,
     goback,
