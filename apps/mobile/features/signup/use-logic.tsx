@@ -3,7 +3,7 @@ import { useMultiscreen } from "@/hooks/use-multiscreen";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { SignupBody } from "./body";
-import { OTP } from "@/components/otp";
+import { OTP } from "@/components/form/otp";
 import { sleep } from "@repo/libs";
 
 export enum SIGNUP_SCREEN {

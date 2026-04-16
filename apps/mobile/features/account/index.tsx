@@ -1,11 +1,14 @@
-import { ThemedSafeArea } from "@/components/themed";
+import { AppSafeArea } from "@/components/themed";
 import { StyleSheet, View } from "react-native";
+import { Head } from "./head";
 
 export const Account = () => {
   return (
-    <ThemedSafeArea>
-      <View style={styles.box}></View>
-    </ThemedSafeArea>
+    <AppSafeArea>
+      <View style={styles.box}>
+        <Head />
+      </View>
+    </AppSafeArea>
   );
 };
 

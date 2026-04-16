@@ -1,5 +1,5 @@
 import { AppSafeArea } from "@/components/themed";
-import { Header } from "@/components/header";
+import { CenterHeader } from "@/components/ui/center-header";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { View, StyleSheet } from "react-native";
 import { Cities } from "./cities";
@@ -16,10 +16,15 @@ export const AddClocks = () => {
   return (
     <SafeAreaProvider>
       <AppSafeArea
-        style={[styles.flex, { backgroundColor: bg }]}
         edges={["top"]}
+        style={[
+          styles.flex,
+          {
+            backgroundColor: bg,
+          },
+        ]}
       >
-        <Header
+        <CenterHeader
           title="Add City"
           right={<OK save={() => {}} />}
           back={() => {
@@ -27,13 +32,16 @@ export const AddClocks = () => {
           }}
         />
         <Search
+          text={logic.search}
           action={(val) => {
             logic.setSearch(val);
           }}
         />
         <Notice
           selected={logic.current}
-          clear={() => logic.setCurrent([])}
+          clear={() => {
+            logic.setCurrent([]);
+          }}
         />
         <View style={styles.box}>
           <Cities

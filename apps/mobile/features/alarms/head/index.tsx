@@ -8,14 +8,14 @@ type Props = {
   data?: any[];
 };
 export const Head = (props: Props) => {
-  const border = useThemeColor("BUTTON_SECONDARY_BACKGROUND_DARK");
+  const border = useThemeColor("SIDEBAR_BORDER");
   return (
     <View
       style={[
         styles.box,
         props.data &&
           props.data.length > 0 && {
-            borderBottomWidth: 1,
+            borderBottomWidth: 0.4,
             borderColor: border,
           },
       ]}

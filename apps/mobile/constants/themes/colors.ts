@@ -2,6 +2,7 @@ export type APP_COLORS = {
   BASE: string;
   TEXT: string;
   BACKGROUND: string;
+  OVERLAY: string;
   TAB_BAR_BACKGROUND: string;
   TAB_BAR_FOREGROUND: string;
   TINT: string;
@@ -80,6 +81,7 @@ const RED_400 = "rgba(255, 69, 58, 1)"; /* #FF453A */
 const DARK_NAVY = "rgba(17, 24, 39, 1)"; /* #111827 */
 const DIM_BLACK_15 = "rgba(0, 0, 0, 0.15)"; /* #000000 */
 const DIM_BLACK_8 = "rgba(0, 0, 0, 0.08)"; /* #000000 */
+const DIM_WHITE_50 = "rgba(255, 255, 255, 0.5)"; /* #FFFFFF */
 const CHARCOAL_900 = "rgba(28, 28, 30, 1)"; /* #1C1C1E */
 const CHARCOAL_800 = "rgba(44, 44, 46, 1)"; /* #2C2C2E */
 const CHARCOAL_700 = "rgba(56, 56, 58, 1)"; /* #38383A */
@@ -115,6 +117,7 @@ export const COLORS = {
   DARK_NAVY,
   DIM_BLACK_15,
   DIM_BLACK_8,
+  DIM_WHITE_50,
   CHARCOAL_900,
   CHARCOAL_800,
   CHARCOAL_700,
@@ -134,6 +137,7 @@ export const LIGHT_THEME_COLORS: APP_COLORS = {
   BASE: WHITE,
   TEXT: BLACK,
   BACKGROUND: GRAY_50,
+  OVERLAY: DIM_WHITE_50,
   TINT: BLUE,
   TAB_BAR_BACKGROUND: BLACK,
   TAB_BAR_FOREGROUND: CHARCOAL_800,
@@ -193,6 +197,7 @@ export const DARK_THEME_COLORS: APP_COLORS = {
   BASE: BLACK,
   TEXT: WHITE,
   BACKGROUND: BLACK,
+  OVERLAY: "rgba(0, 0, 0, 0.6)",
   TAB_BAR_BACKGROUND: CHARCOAL_900,
   TAB_BAR_FOREGROUND: CHARCOAL_700,
   TINT: WHITE,

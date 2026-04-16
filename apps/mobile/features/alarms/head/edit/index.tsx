@@ -6,6 +6,7 @@ import { useAlarmListStore } from "@/features/alarms/use-alarms-list.store";
 export const EditAlarms = () => {
   const store = useAlarmListStore((state) => state);
   const press = () => {
+    if (store.data.processing) return;
     store.set_data({ edit: !store.data.edit });
   };
   return (

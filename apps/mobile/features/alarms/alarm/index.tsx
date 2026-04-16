@@ -6,55 +6,39 @@ import { Days } from "./days";
 import { Footer } from "./footer";
 import { useAlarmListStore } from "../use-alarms-list.store";
 import { DeleteAlarm } from "./delete";
-import { BlurView } from "expo-blur";
 
 export const Alarm = () => {
-  const border = useThemeColor("BUTTON_SECONDARY_BORDER_DARK");
-  const bg = useThemeColor("BASE");
+  const border = useThemeColor("SIDEBAR_BORDER");
+  const bg = useThemeColor("CARD");
   const store = useAlarmListStore((state) => state);
 
   return (
     <View style={{ position: "relative" }}>
-      {/* <DeleteAlarm /> */}
-      <BlurView
-        intensity={100}
-        style={styles.blurContainer}
+      {store.data.edit && <DeleteAlarm />}
+
+      <ThemedView
+        style={[
+          styles.box,
+          {
+            borderColor: border,
+            backgroundColor: bg,
+          },
+        ]}
       >
-        <ThemedView
-          style={[
-            styles.box,
-            {
-              borderColor: border,
-              backgroundColor: bg,
-            },
-          ]}
-        >
-          {/* {store.data.edit && <DeleteAlarm />} */}
+        <Head />
+        <Days />
 
-          <Head />
-          <Days />
+        <View style={styles.timebox}>
+          <InterText style={styles.time}>12:00</InterText>
+        </View>
 
-          <View style={styles.timebox}>
-            <InterText style={styles.time}>12:00</InterText>
-          </View>
-
-          <Footer />
-        </ThemedView>
-      </BlurView>
+        <Footer />
+      </ThemedView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  blurContainer: {
-    flex: 1,
-    padding: 20,
-    margin: 16,
-    textAlign: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    borderRadius: 20,
-  },
   timebox: {
     width: "100%",
   },

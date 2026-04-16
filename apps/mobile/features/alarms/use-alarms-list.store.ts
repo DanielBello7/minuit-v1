@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 type AlarmListData = {
   edit: boolean;
+  processing: boolean;
 };
 
 type State = {
@@ -12,6 +13,7 @@ type State = {
 
 const initial: AlarmListData = {
   edit: false,
+  processing: false,
 };
 
 export const useAlarmListStore = create<State>()((set, get) => ({

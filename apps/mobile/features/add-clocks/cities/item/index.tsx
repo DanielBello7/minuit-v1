@@ -1,5 +1,4 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
-import Entypo from "@expo/vector-icons/Entypo";
 
 import { AppTouchable, InterText } from "@/components/themed";
 import { COLORS } from "@/constants/themes/colors";
@@ -14,7 +13,7 @@ type Props = {
   pick: (val: string) => void;
 };
 export const Item = memo(function Item(props: Props) {
-  const border = useThemeColor("BORDER_DARKER");
+  const border = useThemeColor("SIDEBAR_BORDER");
   const dim = useThemeColor("ACCENT");
 
   return (
@@ -61,7 +60,7 @@ const styles = StyleSheet.create({
     height: 70,
     paddingHorizontal: 16,
     paddingRight: 35,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.4,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

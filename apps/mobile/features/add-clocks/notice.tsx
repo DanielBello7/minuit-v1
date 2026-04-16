@@ -9,7 +9,7 @@ type Props = {
 };
 export const Notice = (props: Props) => {
   const color = useThemeColor("MUTED_FOREGROUND");
-  const bdr = useThemeColor("BORDER_DARKER");
+  const bdr = useThemeColor("SIDEBAR_BORDER");
 
   const isEmpty = props.selected.length > 0 ? false : true;
 
@@ -41,6 +41,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.4,
   },
 });

@@ -1,47 +1,77 @@
-import {
-  Canvas,
-  BackdropBlur,
-  Fill,
-  RoundedRect,
-} from "@shopify/react-native-skia";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from "@expo/vector-icons/Feather";
+
+import * as Animatable from "react-native-animatable";
+
+import { AppTouchable } from "@/components/themed";
+import { StyleSheet, View } from "react-native";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 export const DeleteAlarm = () => {
+  const border = useThemeColor("SIDEBAR_BORDER");
+  const overlay = useThemeColor("OVERLAY");
+  const isLoading = false;
   return (
-    <Canvas
-      style={{
-        borderWidth: 1,
-        width: "100%",
-        height: "100%",
-        position: "absolute",
-        top: 0,
-        left: 0,
-        zIndex: 1,
-      }}
+    <View
+      style={[
+        styles.container,
+        {
+          borderColor: border,
+          backgroundColor: overlay,
+        },
+      ]}
     >
-      <BackdropBlur
-        blur={16}
-        clip={{
-          x: 0,
-          y: 0,
-          width: 220,
-          height: 120,
-          rx: 20,
-          ry: 20,
-        }}
-      >
-        <Fill color="rgba(255,255,255,0.10)" />
-      </BackdropBlur>
-
-      <RoundedRect
-        x={0}
-        y={0}
-        width={220}
-        height={120}
-        r={20}
-        color="rgba(255,255,255,0.18)"
-        style="stroke"
-        strokeWidth={1}
-      />
-    </Canvas>
+      <Animatable.View animation={"bounceIn"}>
+        <AppTouchable
+          style={[styles.btn, isLoading && styles.disabled]}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Animatable.View
+              animation={"rotate"}
+              iterationCount={"infinite"}
+            >
+              <AntDesign
+                name="loading"
+                color="white"
+                size={24}
+              />
+            </Animatable.View>
+          ) : (
+            <Feather
+              color={"white"}
+              name="trash-2"
+              size={20}
+            />
+          )}
+        </AppTouchable>
+      </Animatable.View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    borderWidth: 1,
+    zIndex: 2,
+    borderRadius: 16,
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btn: {
+    width: 40,
+    height: 40,
+    borderRadius: 99,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "red",
+  },
+  disabled: {
+    backgroundColor: "rgba(255, 0, 0, 0.4)",
+  },
+});

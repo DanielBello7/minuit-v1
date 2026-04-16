@@ -1,21 +1,17 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 
+import { SectionList, StyleSheet } from "react-native";
 import { AppTouchable } from "@/components/themed";
 import { RefObject } from "react";
-import { SectionList, StyleSheet } from "react-native";
-import { useThemeColor } from "@/hooks/use-theme-color";
+import { COLORS } from "@/constants/themes/colors";
 
 type Props = {
   link: RefObject<SectionList | null>;
 };
 export const ToTop = (props: Props) => {
-  const bg = useThemeColor("BUTTON_SECONDARY_BACKGROUND_DARK");
-  const fg = useThemeColor("BUTTON_SECONDARY_FOREGROUND");
-  const bd = useThemeColor("BUTTON_SECONDARY_BORDER_DARK");
-
   return (
     <AppTouchable
-      style={[styles.box, { backgroundColor: bg, borderColor: bd }]}
+      style={[styles.box, { backgroundColor: COLORS.PINK }]}
       onPress={() => {
         props.link?.current?.scrollToLocation({
           itemIndex: 0,
@@ -26,7 +22,7 @@ export const ToTop = (props: Props) => {
     >
       <AntDesign
         name="arrow-up"
-        color={fg}
+        color={"white"}
         size={18}
       />
     </AppTouchable>
@@ -36,13 +32,12 @@ export const ToTop = (props: Props) => {
 const styles = StyleSheet.create({
   box: {
     position: "absolute",
-    right: 20,
-    bottom: 20,
+    right: 40,
+    bottom: 40,
     width: 40,
     height: 40,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
-    borderWidth: 1,
   },
 });

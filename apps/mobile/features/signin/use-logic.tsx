@@ -1,6 +1,6 @@
 import { useMultiscreen } from "@/hooks/use-multiscreen";
 import { SigninBody } from "./body";
-import { OTP } from "@/components/otp";
+import { OTP } from "@/components/form/otp";
 import { useRouter } from "expo-router";
 import { sleep } from "@repo/libs";
 import { sonner } from "@/components/sonner";

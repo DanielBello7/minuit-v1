@@ -1,42 +1,32 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 
+import { StyleSheet, TextInput, View } from "react-native";
 import { AppTouchable } from "@/components/themed";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { StyleSheet, TextInput, View } from "react-native";
-import { useState } from "react";
-import { sonner } from "@/components/sonner";
 
 type Props = {
   action: (params: string) => void;
+  text: string;
 };
 export const Search = (props: Props) => {
-  const [text, setText] = useState("");
-  const border = useThemeColor("BORDER_DARKER");
+  const border = useThemeColor("SIDEBAR_BORDER");
   const colors = useThemeColor("TEXT");
+  const muted = useThemeColor("MUTED_FOREGROUND");
 
-  const submit = () => {
-    if (!text.trim()) return sonner.error("Please type in something");
-    else props.action(text);
-  };
   return (
     <View style={[styles.box, { borderColor: border }]}>
       <TextInput
         style={[styles.input, { letterSpacing: 0, color: colors }]}
-        placeholder="Search..."
-        onChangeText={(e) => setText(e)}
-        value={text}
-        keyboardType="default"
+        onChangeText={(e) => props.action(e)}
+        placeholderTextColor={muted}
         submitBehavior="submit"
+        value={props.text}
+        keyboardType="default"
         returnKeyType="search"
-        onSubmitEditing={submit}
+        placeholder="Search..."
       />
-      {text.length > 0 && (
-        <AppTouchable
-          onPress={() => {
-            setText("");
-            props.action("");
-          }}
-        >
+      {props.text.length > 0 && (
+        <AppTouchable onPress={() => props.action("")}>
           <AntDesign
             color={colors}
             name="close"
@@ -56,7 +46,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 6,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.4,
   },
   input: {
     flex: 1,

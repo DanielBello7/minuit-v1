@@ -3,7 +3,7 @@ import { InterText } from "@/components/themed";
 import { Item } from "./item";
 import { CityData } from "city-timezones";
 import { RefObject } from "react";
-import { Empty } from "@/components/empty";
+import { Empty } from "@/components/form/empty";
 import { AlphabetRail } from "./rail";
 
 const ROW_HEIGHT = 70;

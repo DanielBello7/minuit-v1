@@ -1,5 +1,5 @@
-import { Header } from "@/components/header";
-import { Select } from "@/components/select";
+import { CenterHeader } from "@/components/ui/center-header";
+import { Select } from "@/components/form/select";
 import {
   AppSafeArea,
   ButtonC,
@@ -8,11 +8,11 @@ import {
 } from "@/components/themed";
 import { StyleSheet, View } from "react-native";
 import { useLogic } from "./use-logic";
-import { Picker } from "@/components/picker";
+import { Picker } from "@/components/form/picker";
 import { Clock } from "@/components/clock";
 import { User } from "@/libs/user";
-import { Spacer } from "@/components/spacer";
-import { Save } from "./save";
+import { Spacer } from "@/components/ui/spacer";
+import { Reset } from "./reset";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
 export const AddAlarms = () => {
@@ -24,10 +24,10 @@ export const AddAlarms = () => {
       edges={["top"]}
       style={styles.box}
     >
-      <Header
+      <CenterHeader
         title="Add Alarm"
         back={logic.back}
-        right={<Save action={() => {}} />}
+        right={<Reset action={() => {}} />}
       />
       <View style={styles.flex}>
         <InterText style={{ color }}>

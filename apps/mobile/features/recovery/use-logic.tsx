@@ -2,7 +2,7 @@ import { useMultiscreen } from "@/hooks/use-multiscreen";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Password } from "./password";
-import { OTP } from "@/components/otp";
+import { OTP } from "@/components/form/otp";
 import { sleep } from "@repo/libs";
 import { sonner } from "@/components/sonner";
 import { RecoveryBody } from "./body";

@@ -4,7 +4,7 @@ import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Tabs } from "expo-router";
-import { CustomTabBar } from "@/components/tab";
+import { CustomTabBar } from "@/components/c-tab";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
 export default function TabLayout() {

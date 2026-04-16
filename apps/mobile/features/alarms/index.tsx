@@ -4,10 +4,10 @@ import { AppSafeArea } from "@/components/themed";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Head } from "./head";
 import { Alarm } from "./alarm";
-import { Empty } from "@/components/empty";
+import { Empty } from "@/components/form/empty";
 import { useRouter } from "expo-router";
 import { FloatingAddBtn } from "./add-fl-btn";
-import { Spacer } from "@/components/spacer";
+import { Spacer } from "@/components/ui/spacer";
 
 export const Alarms = () => {
   const router = useRouter();

@@ -2,8 +2,8 @@ import { ThemedSafeArea } from "@/components/themed";
 import { InterText } from "@/components/themed/styled-text";
 import { Dimensions, StyleSheet, View } from "react-native";
 import { KeyboardAvoidingView } from "@/components/ui";
-import { WebLink } from "@/components/web-link";
-import { Blob } from "@/components/blob";
+import { WebLink } from "@/components/ui/web-link";
+import { Blob } from "@/components/ui/blob";
 import { Icon } from "@/components/icon";
 import { useLogic } from "./use-logic";
 

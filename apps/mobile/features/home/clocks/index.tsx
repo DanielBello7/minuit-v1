@@ -5,7 +5,7 @@ import { ThemedView } from "@/components/themed";
 import { FlatList } from "react-native-gesture-handler";
 import { COLORS } from "@/constants/themes/colors";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { CloseBtn } from "@/components/close";
+import { CloseBtn } from "@/components/ui/close";
 import { Zoned } from "@/libs/zoned";
 import { Refresh } from "./refresh";
 import { AddNewClock } from "./add";

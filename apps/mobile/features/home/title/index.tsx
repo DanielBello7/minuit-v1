@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
 import { Greeting } from "./greeting";
-import { Theme } from "./theme";
+import { Theme } from "@/components/theme";
 
 export const Title = () => {
   return (
