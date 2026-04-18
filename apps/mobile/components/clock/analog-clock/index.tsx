@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
       },
       android: {
-        elevation: 4,
+        elevation: 1,
       },
       default: {
         shadowColor: COLORS.BLACK,

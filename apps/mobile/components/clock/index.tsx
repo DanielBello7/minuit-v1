@@ -5,7 +5,7 @@ import { useLogic } from "./use-logic";
 import { Header } from "./header";
 import { Footer } from "./footer";
 import { Zoned } from "@/libs/zoned";
-import { TIME_TYPE } from "@/features/home/clocks";
+import { TIME_TYPE } from "@/features/home/my-clocks/clocks";
 
 export type CLOCK_SIZE = "SMALL" | "MEDIUM" | "LARGE";
 export type CLOCK_TYPE = "DIGITAL" | "ANALOG";

@@ -23,7 +23,13 @@ export const Box = (props: Props) => {
     <View style={styles.box}>
       <InterText style={styles.label}>{props.label}</InterText>
       <AppTouchable
-        style={[styles.form, { borderColor: border, backgroundColor: bg }]}
+        style={[
+          styles.form,
+          {
+            borderColor: border,
+            backgroundColor: bg,
+          },
+        ]}
         onPress={() => {
           props.toggle(!props.open);
         }}
@@ -57,7 +63,7 @@ const styles = StyleSheet.create({
   form: {
     width: "100%",
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 0.5,
     flexDirection: "row",
     padding: 12,
     alignItems: "center",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TIME_TYPE } from "@/features/home/clocks";
+import { TIME_TYPE } from "@/features/home/my-clocks/clocks";
 import { Zoned } from "@/libs/zoned";
 import { CLOCK_CUSTOM, CLOCK_SYNC } from ".";
 

@@ -1,5 +1,5 @@
-import { Home } from "@/features/home";
+import { MyClocks } from "@/features/home/my-clocks";
 
 export default function HomeScreen() {
-  return <Home />;
+  return <MyClocks />;
 }

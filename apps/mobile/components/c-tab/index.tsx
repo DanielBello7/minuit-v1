@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { PlatformPressable } from "@react-navigation/elements";
 import { Edge, SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "@/constants/themes/colors";
@@ -17,6 +17,7 @@ export const CustomTabBar = ({
   const bg = useThemeColor("TAB_BAR_BACKGROUND");
   const fg = useThemeColor("TAB_BAR_FOREGROUND");
   const bd = useThemeColor("BUTTON_SECONDARY_BORDER");
+
   return (
     <SafeAreaView
       style={styles.container}
@@ -82,7 +83,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "transparent",
     position: "absolute",
-    bottom: -14,
+    bottom: Platform.select({
+      android: 0,
+      ios: -14,
+    }),
     elevation: 0,
     width: "100%",
   },

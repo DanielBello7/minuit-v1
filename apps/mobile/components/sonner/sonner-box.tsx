@@ -20,6 +20,7 @@ export const SonnerBox = () => {
   const { visible, msg, title, state: type, ref } = state;
   const border = useThemeColor("BORDER");
   const bg = useThemeColor("BASE");
+  const icon = useThemeColor("TEXT");
 
   useEffect(() => {
     let timeout: number | undefined;
@@ -56,7 +57,7 @@ export const SonnerBox = () => {
             <View style={{ paddingTop: 10 }}>
               <Ionicons
                 name="alert-circle"
-                color="black"
+                color={icon}
                 size={15}
               />
             </View>

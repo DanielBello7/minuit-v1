@@ -1,5 +1,6 @@
 import { COLORS } from "@/constants/themes/colors";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { with_alpha } from "@/libs/with-alpha";
 import { useRef } from "react";
 import { Animated, StyleSheet, TextInput, View } from "react-native";
 
@@ -64,8 +65,8 @@ const styles = StyleSheet.create({
   focusBorder: {
     ...StyleSheet.absoluteFillObject,
     borderWidth: 3,
-    borderColor: COLORS.PINK,
-    borderRadius: 15,
+    borderColor: with_alpha(COLORS.PINK, 0.5),
+    borderRadius: 20,
   },
   loading: {
     opacity: 0.4,

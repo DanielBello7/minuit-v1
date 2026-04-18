@@ -9,6 +9,7 @@ import { InterText } from "@/components/themed";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { ReactNode, useRef } from "react";
 import { COLORS } from "@/constants/themes/colors";
+import { with_alpha } from "@/libs/with-alpha";
 
 type Props = TextInputProps & {
   label?: string;
@@ -17,7 +18,7 @@ type Props = TextInputProps & {
 };
 
 export const AppInput = (props: Props) => {
-  const border = useThemeColor("BORDER");
+  const border = useThemeColor("SIDEBAR_BORDER");
   const text = useThemeColor("TEXT");
   const focusOpacity = useRef(new Animated.Value(0)).current;
 
@@ -36,7 +37,14 @@ export const AppInput = (props: Props) => {
       {props.label && (
         <InterText style={styles.label}>{props.label}</InterText>
       )}
-      <View style={[styles.box, { borderColor: border }]}>
+      <View
+        style={[
+          styles.box,
+          {
+            borderColor: border,
+          },
+        ]}
+      >
         {props.icon && <View>{props.icon}</View>}
 
         <TextInput
@@ -62,7 +70,10 @@ export const AppInput = (props: Props) => {
           pointerEvents="none"
           style={[
             styles.focusBorder,
-            { borderColor: COLORS.PINK, opacity: focusOpacity },
+            {
+              borderColor: with_alpha(COLORS.PINK, 0.5),
+              opacity: focusOpacity,
+            },
           ]}
         />
       </View>
@@ -88,7 +99,7 @@ const styles = StyleSheet.create({
   },
   box: {
     width: "100%",
-    borderWidth: 1,
+    borderWidth: 0.4,
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
